@@ -33,7 +33,7 @@ function generateHunts(): HuntResult[] {
       time_range_end: BASE_TS + 72 * 3600,
       summary: 'Identified 8 high-confidence C2 beacon patterns across 6 internal hosts. Primary beacon targets include known Tor exit nodes and bulletproof hosting infrastructure. Beacon intervals range from 30s to 600s with jitter patterns consistent with Cobalt Strike and custom implants.',
       recommendations: [
-        'Immediately isolate 10.0.1.15 and 192.168.10.22 — highest confidence C2 activity',
+        'Immediately isolate 198.19.1.15 and 198.18.10.22 — highest confidence C2 activity',
         'Block outbound traffic to 185.220.101.34, 198.98.56.78, 162.247.74.27 at perimeter',
         'Deploy SSL inspection on port 443/8443 for affected subnets',
         'Conduct memory forensics on identified hosts for implant artifacts',
@@ -61,12 +61,12 @@ function generateHunts(): HuntResult[] {
       analysis_end: BASE_TS + 74 * 3600,
       time_range_start: BASE_TS - 336 * 3600,
       time_range_end: BASE_TS + 74 * 3600,
-      summary: 'Confirmed DNS tunneling activity from 10.0.2.5 to multiple external resolvers. Estimated 7.2MB exfiltrated via high-entropy subdomain queries to data.exfil.tunnel.example.com. Query patterns indicate automated tooling with base64-encoded payloads fragmented across TXT record requests.',
+      summary: 'Confirmed DNS tunneling activity from 198.19.2.5 to multiple external resolvers. Estimated 7.2MB exfiltrated via high-entropy subdomain queries to data.exfil.tunnel.example.com. Query patterns indicate automated tooling with base64-encoded payloads fragmented across TXT record requests.',
       recommendations: [
         'Enforce DNS-over-HTTPS (DoH) policy to internal resolvers only',
         'Implement DNS query length and entropy monitoring at resolver level',
         'Block identified tunneling domains at DNS sinkhole',
-        'Investigate 10.0.2.5 for installed exfiltration tooling',
+        'Investigate 198.19.2.5 for installed exfiltration tooling',
         'Review outbound TXT record queries exceeding 100 chars',
       ],
       false_positive_likelihood: 'Very Low',
@@ -94,7 +94,7 @@ function generateHunts(): HuntResult[] {
       summary: 'Detected 12 unique DGA domain patterns from 5 internal hosts. Domains exhibit high entropy (>3.8), elevated consonant ratios, and cluster across .ru, .cn, .biz, and .info TLDs. Multiple NXDOMAIN responses followed by successful resolution suggest active domain cycling consistent with Emotet/Trickbot DGA families.',
       recommendations: [
         'Deploy real-time DGA detection at DNS resolver with ML-based classifier',
-        'Quarantine 172.16.0.10 — highest DGA query volume',
+        'Quarantine 198.18.160.10 — highest DGA query volume',
         'Cross-reference DGA domains with threat intel feeds for malware family attribution',
         'Implement DNS response policy zones (RPZ) for known DGA TLDs',
       ],

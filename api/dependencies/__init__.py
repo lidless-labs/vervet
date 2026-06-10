@@ -1,5 +1,5 @@
 """
-FastAPI dependencies for Bro Hunter.
+FastAPI dependencies for Vervet.
 """
 from api.dependencies.auth import api_key_auth
 

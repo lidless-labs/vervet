@@ -2,12 +2,12 @@
 Simple in-memory IP-based rate limiter.
 
 Configure via environment variables:
-  BROHUNTER_RATE_LIMIT_ENABLED=true    (default: true)
-  BROHUNTER_RATE_LIMIT_HOURLY=5        (max uploads per hour per IP, default: 5)
-  BROHUNTER_RATE_LIMIT_DAILY=15        (max uploads per day per IP, default: 15)
+  VERVET_RATE_LIMIT_ENABLED=true    (default: true)
+  VERVET_RATE_LIMIT_HOURLY=5        (max uploads per hour per IP, default: 5)
+  VERVET_RATE_LIMIT_DAILY=15        (max uploads per day per IP, default: 15)
 
 To disable rate limiting (e.g. self-hosted / cloned deployments):
-  Set BROHUNTER_RATE_LIMIT_ENABLED=false
+  Set VERVET_RATE_LIMIT_ENABLED=false
 """
 import os
 import time
@@ -17,9 +17,9 @@ from fastapi import Request, HTTPException
 
 
 # Configuration from environment
-RATE_LIMIT_ENABLED = os.environ.get("BROHUNTER_RATE_LIMIT_ENABLED", "true").lower() == "true"
-RATE_LIMIT_HOURLY = int(os.environ.get("BROHUNTER_RATE_LIMIT_HOURLY", "5"))
-RATE_LIMIT_DAILY = int(os.environ.get("BROHUNTER_RATE_LIMIT_DAILY", "15"))
+RATE_LIMIT_ENABLED = os.environ.get("VERVET_RATE_LIMIT_ENABLED", "true").lower() == "true"
+RATE_LIMIT_HOURLY = int(os.environ.get("VERVET_RATE_LIMIT_HOURLY", "5"))
+RATE_LIMIT_DAILY = int(os.environ.get("VERVET_RATE_LIMIT_DAILY", "15"))
 
 # Trusted proxy IPs that are allowed to set X-Forwarded-For (parsed once at import)
 _trusted_proxies_raw = os.environ.get("TRUSTED_PROXIES", "").split(",")

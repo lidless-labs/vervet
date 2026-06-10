@@ -1,9 +1,12 @@
 FROM python:3.12-slim
 
-# Install Node for frontend build
-RUN apt-get update && apt-get install -y curl && \
+# Install Node for the frontend build, plus the toolchain pycairo needs.
+# xhtml2pdf (PDF reports) pulls in pycairo, which compiles from source and
+# requires a C compiler + cairo headers; the runtime needs libcairo2.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl build-essential pkg-config libcairo2-dev && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get install -y --no-install-recommends nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

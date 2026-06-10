@@ -1,5 +1,5 @@
 """
-API authentication dependency for Bro Hunter.
+API authentication dependency for Vervet.
 Provides API key-based authentication for sensitive endpoints.
 """
 from fastapi import HTTPException, Security, status
@@ -12,7 +12,7 @@ from api.config import settings
 api_key_header = APIKeyHeader(
     name="X-API-Key",
     auto_error=False,
-    description="API key for authentication. Set via BROHUNTER_API_KEY environment variable.",
+    description="API key for authentication. Set via VERVET_API_KEY environment variable.",
 )
 
 
@@ -22,8 +22,8 @@ async def api_key_auth(
     """
     Validate API key from request header.
 
-    If BROHUNTER_API_KEY is not set, authentication is disabled (development mode).
-    In production, always set BROHUNTER_API_KEY to a secure random value.
+    If VERVET_API_KEY is not set, authentication is disabled (development mode).
+    In production, always set VERVET_API_KEY to a secure random value.
 
     Args:
         api_key: API key from X-API-Key header

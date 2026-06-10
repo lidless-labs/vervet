@@ -105,12 +105,12 @@ const HuntResults: React.FC = () => {
   const topDns = [...mockDnsThreats].sort((a, b) => b.score - a.score).slice(0, 5);
 
   const recommendations = [
-    'Immediately isolate hosts 10.0.1.15 and 10.0.2.5 — confirmed C2 beacon and DNS exfiltration activity.',
+    'Immediately isolate hosts 198.19.1.15 and 198.19.2.5 — confirmed C2 beacon and DNS exfiltration activity.',
     'Block outbound connections to 185.220.101.34 and 91.219.236.222 at the firewall level.',
-    'Investigate DGA patterns from 172.16.0.10 — possible Emotet variant infection.',
+    'Investigate DGA patterns from 198.18.160.10 — possible Emotet variant infection.',
     'Review SSL certificates on port 443 connections to 198.98.56.78 — certificate CN mismatch detected.',
-    'Deploy additional monitoring for DNS TXT record queries from the 10.0.2.0/24 subnet.',
-    'Escalate Tor exit node communications from 10.0.3.8 to incident response team.',
+    'Deploy additional monitoring for DNS TXT record queries from the 198.19.2.0/24 subnet.',
+    'Escalate Tor exit node communications from 198.19.3.8 to incident response team.',
     'Update threat intelligence feeds to include newly discovered C2 domains.',
     'Schedule full forensic analysis of hosts with beacon scores ≥ 90.',
   ];
@@ -354,7 +354,7 @@ const HuntResults: React.FC = () => {
             Report generated {format(new Date(), 'MMMM d, yyyy HH:mm:ss')}
           </div>
           <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
-            Bro Hunter — Corporate SOC Edition · Automated Threat Hunt Analysis
+            Vervet — Corporate SOC Edition · Automated Threat Hunt Analysis
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

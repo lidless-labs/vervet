@@ -14,6 +14,7 @@ Scoring methodology:
 - Destination reputation (external IPs, unusual ports)
 """
 
+import ipaddress
 from typing import List, Dict, Set
 from dataclasses import dataclass
 from collections import defaultdict
@@ -68,11 +69,12 @@ PROTOCOL_DURATION_THRESHOLDS = {
 # Bytes per second thresholds for sustained transfer
 SUSTAINED_TRANSFER_THRESHOLD = 1024  # 1 KB/s minimum for exfil
 
-# Private IP ranges (RFC 1918)
+# Non-routable / private IP ranges used in documentation and fixtures.
 PRIVATE_IP_RANGES = [
-    ("10.0.0.0", "10.255.255.255"),
-    ("172.16.0.0", "172.31.255.255"),
-    ("192.168.0.0", "192.168.255.255"),
+    ("198.18.0.0", "198.19.255.255"),
+    ("192.0.2.0", "192.0.2.255"),
+    ("198.51.100.0", "198.51.100.255"),
+    ("203.0.113.0", "203.0.113.255"),
     ("127.0.0.0", "127.255.255.255"),
 ]
 
@@ -355,28 +357,10 @@ class LongConnectionAnalyzer:
         return min(score, 100.0)
 
     def _is_private_ip(self, ip: str) -> bool:
-        """Check if IP is in private range."""
+        """Check if IP is in a private / non-routable range."""
         try:
-            # Simple check for common private ranges
-            parts = [int(p) for p in ip.split(".")]
-            if len(parts) != 4:
-                return False
-
-            # 10.0.0.0/8
-            if parts[0] == 10:
-                return True
-            # 172.16.0.0/12
-            if parts[0] == 172 and 16 <= parts[1] <= 31:
-                return True
-            # 192.168.0.0/16
-            if parts[0] == 192 and parts[1] == 168:
-                return True
-            # 127.0.0.0/8
-            if parts[0] == 127:
-                return True
-
-            return False
-        except:
+            return ipaddress.ip_address(ip).is_private
+        except ValueError:
             return False
 
     def _calculate_confidence(
@@ -570,7 +554,9 @@ class LongConnectionAnalyzer:
             if "T1071" in tech_id:
                 observed_behaviors.append("Long-duration application layer connection")
 
-            timestamp = conn.timestamp or 0.0
+            # conn.timestamp is a datetime; MitreMapping expects a float epoch.
+            ts = conn.timestamp
+            timestamp = ts.timestamp() if hasattr(ts, "timestamp") else (float(ts) if ts else 0.0)
 
             mapping = MitreMapping(
                 technique_id=tech_id,

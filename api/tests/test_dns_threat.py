@@ -31,7 +31,7 @@ class TestDnsAnalyzer:
     def create_dns_query(
         self,
         query: str,
-        src_ip: str = "10.0.0.1",
+        src_ip: str = "203.0.113.1",
         dst_ip: str = "8.8.8.8",
         qtype: str = "A",
         rcode: str = "NOERROR",
@@ -101,8 +101,10 @@ class TestDnsAnalyzer:
 
     def test_bigram_score_calculation(self, analyzer):
         """Test English bigram frequency scoring."""
-        # English word should have high score
-        score_english = analyzer._calculate_bigram_score("example")
+        # English word rich in common bigrams should score high. ("example"
+        # was a poor fixture choice: none of its bigrams ex/xa/am/mp/pl/le are
+        # in the analyzer's top-30 COMMON_BIGRAMS table, so it scores 0.)
+        score_english = analyzer._calculate_bigram_score("internet")
         assert score_english > 30.0
 
         # Random string should have low score
@@ -118,7 +120,7 @@ class TestDnsAnalyzer:
             subdomain = f"a1b2c3d4e5f6g7h8i9j0k{i}"  # High entropy
             query = self.create_dns_query(
                 query=f"{subdomain}.evil-c2.com",
-                src_ip="192.168.1.100",
+                src_ip="192.0.2.100",
                 timestamp=base_time + timedelta(seconds=i * 30),
             )
             queries.append(query)
@@ -128,7 +130,7 @@ class TestDnsAnalyzer:
         assert len(results) > 0
         result = results[0]
         assert result.domain == "evil-c2.com"
-        assert result.src_ip == "192.168.1.100"
+        assert result.src_ip == "192.0.2.100"
         assert result.tunneling_score >= 60.0
         assert result.avg_subdomain_entropy > 3.0
         assert result.unique_subdomains >= 10
@@ -137,12 +139,14 @@ class TestDnsAnalyzer:
         """Test detection of DNS tunneling via TXT records."""
         queries = []
 
-        # Generate TXT queries with encoded data
+        # Generate TXT queries with encoded data. Subdomains must be
+        # high-entropy/encoded-looking to score as tunneling; benign labels
+        # like "data000" legitimately score below threshold.
         for i in range(10):
-            subdomain = f"data{i:03d}"
+            subdomain = f"a1b2c3d4e5f6g7h8i9j0k{i}"
             query = self.create_dns_query(
                 query=f"{subdomain}.exfil.com",
-                src_ip="192.168.1.101",
+                src_ip="192.0.2.101",
                 qtype="TXT",
                 timestamp=base_time + timedelta(seconds=i * 10),
             )
@@ -164,7 +168,7 @@ class TestDnsAnalyzer:
             subdomain = f"verylongsubdomainwithlotsofcharacters{i}" * 2
             query = self.create_dns_query(
                 query=f"{subdomain}.tunnel.net",
-                src_ip="192.168.1.102",
+                src_ip="192.0.2.102",
                 timestamp=base_time + timedelta(seconds=i * 20),
             )
             queries.append(query)
@@ -185,7 +189,7 @@ class TestDnsAnalyzer:
         for i in range(5):
             query = self.create_dns_query(
                 query=dga_domain,
-                src_ip="192.168.1.200",
+                src_ip="192.0.2.200",
                 rcode="NXDOMAIN",
                 timestamp=base_time + timedelta(seconds=i * 60),
             )
@@ -209,7 +213,7 @@ class TestDnsAnalyzer:
         for i in range(5):
             query = self.create_dns_query(
                 query=dga_domain,
-                src_ip="192.168.1.201",
+                src_ip="192.0.2.201",
                 rcode="NXDOMAIN",
                 timestamp=base_time + timedelta(seconds=i * 30),
             )
@@ -231,7 +235,7 @@ class TestDnsAnalyzer:
         for i in range(5):
             query = self.create_dns_query(
                 query=dga_domain,
-                src_ip="192.168.1.202",
+                src_ip="192.0.2.202",
                 timestamp=base_time + timedelta(seconds=i * 45),
             )
             queries.append(query)
@@ -246,15 +250,17 @@ class TestDnsAnalyzer:
         """Test detection of fast-flux DNS with multiple IPs."""
         queries = []
 
-        # Generate queries returning different IPs
+        # Generate queries returning different IPs. The analyzer requires the
+        # observations to span at least 1 hour; 10 queries at 600s intervals
+        # gives a 1.5h window (the previous 300s interval spanned only 45 min).
         domain = "fastflux.example.com"
         for i in range(10):
             answers = [f"203.0.113.{i}"]
             query = self.create_dns_query(
                 query=domain,
-                src_ip="192.168.1.300",
+                src_ip="192.0.2.300",
                 answers=answers,
-                timestamp=base_time + timedelta(seconds=i * 300),
+                timestamp=base_time + timedelta(seconds=i * 600),
             )
             queries.append(query)
 
@@ -276,7 +282,7 @@ class TestDnsAnalyzer:
             answers = [f"198.51.100.{i % 20}"]
             query = self.create_dns_query(
                 query=domain,
-                src_ip="192.168.1.301",
+                src_ip="192.0.2.301",
                 answers=answers,
                 timestamp=base_time + timedelta(minutes=i * 10),
             )
@@ -297,7 +303,7 @@ class TestDnsAnalyzer:
         for i in range(20):
             query = self.create_dns_query(
                 query=f"random{i}.doesnotexist.com",
-                src_ip="192.168.1.400",
+                src_ip="192.0.2.400",
                 rcode="NXDOMAIN",
                 timestamp=base_time + timedelta(seconds=i * 15),
             )
@@ -309,7 +315,7 @@ class TestDnsAnalyzer:
         assert len(nxdomain_patterns) > 0
 
         result = nxdomain_patterns[0]
-        assert result.src_ip == "192.168.1.400"
+        assert result.src_ip == "192.0.2.400"
         assert "NXDOMAIN" in " ".join(result.reasons)
 
     def test_unusual_query_types_detection(self, analyzer, base_time):
@@ -321,7 +327,7 @@ class TestDnsAnalyzer:
         for i, qtype in enumerate(unusual_types * 3):
             query = self.create_dns_query(
                 query=f"test{i}.example.com",
-                src_ip="192.168.1.500",
+                src_ip="192.0.2.500",
                 qtype=qtype,
                 timestamp=base_time + timedelta(seconds=i * 20),
             )
@@ -333,7 +339,7 @@ class TestDnsAnalyzer:
         assert len(unusual_patterns) > 0
 
         result = unusual_patterns[0]
-        assert result.src_ip == "192.168.1.500"
+        assert result.src_ip == "192.0.2.500"
         assert "Unusual DNS query types" in " ".join(result.reasons)
 
     def test_high_query_rate_detection(self, analyzer, base_time):
@@ -345,7 +351,7 @@ class TestDnsAnalyzer:
         for i in range(100):
             query = self.create_dns_query(
                 query=domain,
-                src_ip="192.168.1.600",
+                src_ip="192.0.2.600",
                 timestamp=base_time + timedelta(seconds=i * 2),
             )
             queries.append(query)
@@ -363,23 +369,28 @@ class TestDnsAnalyzer:
         """Test comprehensive analysis with multiple threat types."""
         queries = []
 
-        # Add tunneling queries
+        # Add tunneling queries. Subdomains must be high-entropy to score as
+        # tunneling (the prior "encoded{i:05x}data" labels were too low-entropy
+        # and scored below threshold).
         for i in range(15):
-            subdomain = f"encoded{i:05x}data"
+            subdomain = f"a1b2c3d4e5f6g7h8i9j0k{i}"
             queries.append(
                 self.create_dns_query(
                     query=f"{subdomain}.tunnel.com",
-                    src_ip="10.0.1.1",
+                    src_ip="198.19.1.1",
                     timestamp=base_time + timedelta(seconds=i * 30),
                 )
             )
 
-        # Add DGA queries
+        # Add DGA queries. DGA detection groups by base domain and needs
+        # >= min_queries_dga repeats of the SAME domain; the prior per-query
+        # unique domains ("xqzwfkjh{i}.tk") each had a single query and were
+        # all skipped. Use one repeated high-entropy NXDOMAIN domain.
         for i in range(10):
             queries.append(
                 self.create_dns_query(
-                    query=f"xqzwfkjh{i}.tk",
-                    src_ip="10.0.1.2",
+                    query="xqzwfkjhgpmnb.tk",
+                    src_ip="198.19.1.2",
                     rcode="NXDOMAIN",
                     timestamp=base_time + timedelta(seconds=i * 45),
                 )
@@ -390,7 +401,7 @@ class TestDnsAnalyzer:
             queries.append(
                 self.create_dns_query(
                     query="fastflux.net",
-                    src_ip="10.0.1.3",
+                    src_ip="198.19.1.3",
                     answers=[f"192.0.2.{i}"],
                     timestamp=base_time + timedelta(minutes=i * 15),
                 )
@@ -419,7 +430,7 @@ class TestDnsAnalyzer:
             for i in range(5):
                 query = self.create_dns_query(
                     query=domain,
-                    src_ip="10.0.2.1",
+                    src_ip="198.19.2.1",
                     answers=["93.184.216.34"],
                     timestamp=base_time + timedelta(minutes=i * 30),
                 )
@@ -447,7 +458,7 @@ class TestDnsAnalyzer:
         """Test handling of single query (below minimum thresholds)."""
         query = self.create_dns_query(
             query="test.example.com",
-            src_ip="10.0.3.1",
+            src_ip="198.19.3.1",
             timestamp=base_time,
         )
 
@@ -463,12 +474,14 @@ class TestDnsAnalyzer:
         """Test that MITRE ATT&CK techniques are correctly assigned."""
         queries = []
 
-        # High-scoring tunneling with TXT records
+        # High-scoring tunneling with TXT records. Subdomains need enough
+        # entropy/length to clear the tunneling threshold (the shorter
+        # "a1b2c3d4{i}" labels scored 55, just under 60).
         for i in range(15):
             queries.append(
                 self.create_dns_query(
-                    query=f"a1b2c3d4{i}.exfil.com",
-                    src_ip="10.0.4.1",
+                    query=f"a1b2c3d4e5f6g7h8i9j0k{i}.exfil.com",
+                    src_ip="198.19.4.1",
                     qtype="TXT",
                     timestamp=base_time + timedelta(seconds=i * 20),
                 )
@@ -491,7 +504,7 @@ class TestDnsAnalyzer:
             queries_few.append(
                 self.create_dns_query(
                     query=f"test{i}.tunnel.com",
-                    src_ip="10.0.5.1",
+                    src_ip="198.19.5.1",
                     timestamp=base_time + timedelta(seconds=i * 30),
                 )
             )
@@ -501,7 +514,7 @@ class TestDnsAnalyzer:
             queries_many.append(
                 self.create_dns_query(
                     query=f"test{i}.tunnel.com",
-                    src_ip="10.0.5.2",
+                    src_ip="198.19.5.2",
                     timestamp=base_time + timedelta(seconds=i * 30),
                 )
             )

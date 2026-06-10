@@ -18,7 +18,7 @@ from api.services.demo_data import DemoDataService
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-SETTINGS_FILE = os.environ.get("BROHUNTER_SETTINGS_FILE", "brohunter_settings.json")
+SETTINGS_FILE = os.environ.get("VERVET_SETTINGS_FILE", "vervet_settings.json")
 
 DEFAULT_SETTINGS = {
     "threat_intel": {

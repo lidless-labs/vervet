@@ -1,5 +1,5 @@
 """
-Bro Hunter API - FastAPI application entry point.
+Vervet API - FastAPI application entry point.
 Provides REST endpoints for network log analysis and threat hunting.
 """
 import os
@@ -20,19 +20,19 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Production safety check: refuse to start without an API key in production
 # ---------------------------------------------------------------------------
-_env = os.environ.get("BROHUNTER_ENV", "development").lower()
+_env = os.environ.get("VERVET_ENV", "development").lower()
 if _env == "production" and not settings.api_key:
     logger.critical(
-        "FATAL: BROHUNTER_ENV is 'production' but BROHUNTER_API_KEY is not set. "
+        "FATAL: VERVET_ENV is 'production' but VERVET_API_KEY is not set. "
         "Refusing to start without authentication. "
-        "Set BROHUNTER_API_KEY to a secure random value."
+        "Set VERVET_API_KEY to a secure random value."
     )
     sys.exit(1)
 
 if not settings.api_key:
     logger.warning(
-        "BROHUNTER_API_KEY is not set — authentication is disabled (dev mode). "
-        "Set BROHUNTER_ENV=production and BROHUNTER_API_KEY for production use."
+        "VERVET_API_KEY is not set — authentication is disabled (dev mode). "
+        "Set VERVET_ENV=production and VERVET_API_KEY for production use."
     )
 
 
@@ -42,7 +42,7 @@ from contextlib import asynccontextmanager
 async def lifespan(application):
     """Startup: load demo data if enabled."""
     import os, traceback
-    raw_env = os.environ.get("BROHUNTER_DEMO_MODE", "unset")
+    raw_env = os.environ.get("VERVET_DEMO_MODE", "unset")
     demo = getattr(settings, "demo_mode", False)
     print(f"[STARTUP] Demo check: env={raw_env}, settings.demo_mode={demo}", flush=True)
     if demo or str(raw_env).lower() in ("true", "1", "yes"):

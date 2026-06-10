@@ -1,0 +1,20 @@
+services:
+  vervet:
+    build: .
+    image: vervet:latest
+    container_name: vervet
+    # Demo mode seeds a sample environment (beaconing C2, DNS tunneling, a noisy
+    # Suricata sensor) on startup so the dashboard is populated immediately.
+    # Set VERVET_DEMO_MODE=false and mount your own logs to run on real data.
+    environment:
+      VERVET_DEMO_MODE: "true"
+      # VERVET_API_KEY: "change-me"        # require an API key on every request
+      # VERVET_LOG_ROOT: "/logs"           # restrict ingestion to this directory
+    # Bound to loopback by default. Change to "8000:8000" to expose on the LAN
+    # (do that only after setting VERVET_API_KEY).
+    ports:
+      - "127.0.0.1:8000:8000"
+    # Mount a read-only log directory to ingest your own Zeek/Suricata logs:
+    # volumes:
+    #   - /var/log/zeek:/logs:ro
+    restart: unless-stopped

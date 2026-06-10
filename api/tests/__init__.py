@@ -1,3 +1,3 @@
 """
-Hunter test suite.
+Vervet test suite.
 """

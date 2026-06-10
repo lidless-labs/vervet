@@ -1,8 +1,8 @@
-# Log Ingestion Engine - Hunter
+# Log Ingestion Engine - Vervet
 
 ## Overview
 
-The log ingestion engine is the data backbone of Hunter, providing:
+The log ingestion engine is the data backbone of Vervet, providing:
 - **Streaming parsers** for Zeek and Suricata logs (handles files >100MB)
 - **Unified data models** for cross-platform analysis
 - **In-memory queryable store** with filtering and pagination
@@ -164,7 +164,7 @@ print(f"Loaded {stats['record_count']} records from {stats['file_count']} files"
 # Query connections
 tcp_conns = log_store.get_connections(proto="tcp", limit=100)
 long_conns = log_store.get_connections(min_duration=60.0)
-filtered = log_store.get_connections(src_ip="192.168.1.10", dst_port=443)
+filtered = log_store.get_connections(src_ip="192.0.2.10", dst_port=443)
 
 # Get DNS queries
 dns = log_store.get_dns_queries(query="google.com")
@@ -248,7 +248,7 @@ Response:
   "time_range": {"start": "...", "end": "..."},
   "protocol_breakdown": {"tcp": 456, "udp": 234, "icmp": 200},
   "service_breakdown": {"https": 123, "dns": 89, "ssh": 45},
-  "top_sources": [{"ip": "192.168.1.10", "count": 234}],
+  "top_sources": [{"ip": "192.0.2.10", "count": 234}],
   "top_destinations": [{"ip": "8.8.8.8", "count": 89}]
 }
 ```

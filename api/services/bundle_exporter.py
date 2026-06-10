@@ -34,7 +34,7 @@ class BundleExporter:
                 "id": report_id,
                 "created": now,
                 "modified": now,
-                "name": case.get("title", "Bro Hunter Case"),
+                "name": case.get("title", "Vervet Case"),
                 "description": case.get("description", ""),
                 "published": now,
                 "report_types": ["threat-report"],

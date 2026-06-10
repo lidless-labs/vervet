@@ -1,14 +1,40 @@
 """
-Configuration package for Hunter API.
+Configuration package for Vervet API.
 """
+import os
+import warnings
 from typing import Optional
 from pydantic_settings import BaseSettings
+
+
+def _migrate_legacy_env_prefix() -> None:
+    """Back-compat: map deprecated BROHUNTER_* env vars onto VERVET_* for one release.
+
+    Vervet was formerly named "Bro Hunter". Existing deployments may still set
+    BROHUNTER_API_KEY / BROHUNTER_LOG_ROOT / etc. Honor them unless the VERVET_
+    equivalent is already set, and warn so operators migrate before the next release.
+    """
+    legacy = {k: v for k, v in os.environ.items() if k.startswith("BROHUNTER_")}
+    if not legacy:
+        return
+    for old_key, value in legacy.items():
+        new_key = "VERVET_" + old_key[len("BROHUNTER_"):]
+        os.environ.setdefault(new_key, value)
+    warnings.warn(
+        "BROHUNTER_* environment variables are deprecated; rename them to VERVET_* "
+        "(this shim will be removed in a future release).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+
+_migrate_legacy_env_prefix()
 
 
 class Settings(BaseSettings):
     """Application settings and configuration."""
 
-    app_name: str = "Bro Hunter - Network Threat Hunting Platform"
+    app_name: str = "Vervet - Network Threat Hunting Platform"
     app_version: str = "0.2.0"
     api_prefix: str = "/api/v1"
     api_key: str | None = None
@@ -26,7 +52,7 @@ class Settings(BaseSettings):
     dns_query_threshold: int = 100
 
     class Config:
-        env_prefix = "BROHUNTER_"
+        env_prefix = "VERVET_"
         case_sensitive = False
 
 

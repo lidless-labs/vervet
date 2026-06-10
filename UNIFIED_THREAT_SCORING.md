@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the implementation of the unified threat scoring engine and MITRE ATT&CK mapping system for AC Hunter. The system aggregates detections from multiple sources, provides per-host risk scores, and maps all threats to the MITRE ATT&CK framework with full evidence chains.
+This document describes the implementation of the unified threat scoring engine and MITRE ATT&CK mapping system for Vervet. The system aggregates detections from multiple sources, provides per-host risk scores, and maps all threats to the MITRE ATT&CK framework with full evidence chains.
 
 ## Architecture
 
@@ -253,7 +253,7 @@ Get unified threat scores for all hosts.
 {
   "threats": [
     {
-      "entity": "192.168.1.100",
+      "entity": "192.0.2.100",
       "score": 0.85,
       "level": "critical",
       "confidence": 0.9,
@@ -274,7 +274,7 @@ Get detailed threat profile for specific host.
 **Response:**
 ```json
 {
-  "ip": "192.168.1.100",
+  "ip": "192.0.2.100",
   "score": 0.85,
   "threat_level": "critical",
   "confidence": 0.9,
@@ -286,7 +286,7 @@ Get detailed threat profile for specific host.
   "indicators": [{...}],
   "mitre_techniques": ["T1071", "T1041", "..."],
   "mitre_mappings": [{...}],
-  "attack_summary": "Host 192.168.1.100 shows CRITICAL threat activity...",
+  "attack_summary": "Host 192.0.2.100 shows CRITICAL threat activity...",
   "related_ips": ["8.8.8.8", "..."],
   "related_domains": ["malicious.com", "..."],
   "first_seen": 1704000000.0,
@@ -339,7 +339,7 @@ Get MITRE ATT&CK technique mappings.
       "tactic_id": "TA0011",
       "confidence": 0.85,
       "detection_count": 5,
-      "affected_hosts": ["192.168.1.100", "192.168.1.101"],
+      "affected_hosts": ["192.0.2.100", "192.0.2.101"],
       "observed_behaviors": ["Periodic callbacks", "Encrypted channel"]
     }
   ],
@@ -366,7 +366,7 @@ Get MITRE ATT&CK overview with aggregate statistics.
     "TA0007": 2
   },
   "affected_hosts": {
-    "T1071": ["192.168.1.100", "192.168.1.101"]
+    "T1071": ["192.0.2.100", "192.0.2.101"]
   }
 }
 ```
@@ -449,7 +449,7 @@ Every threat score includes:
 
 3. **MITRE Mappings**: Technique-to-behavior links
    - Technique: T1041 (Exfiltration Over C2 Channel)
-   - Evidence: ["Long connection: 192.168.1.100 → 8.8.8.8:443", ...]
+   - Evidence: ["Long connection: 192.0.2.100 → 8.8.8.8:443", ...]
    - Observed Behaviors: ["Sustained outbound data transfer"]
    - Confidence: 0.87
    - Detection Count: 3
@@ -473,7 +473,7 @@ Every threat score includes:
    ```
 
 5. **Attack Summary**: Natural language narrative
-   - "Host 192.168.1.100 shows HIGH threat activity. Detected: 3 C2 beacon(s), 2 DNS threat(s), 5 IDS alert(s). MITRE ATT&CK techniques: T1071, T1041, T1048.003. Activity observed over 2.8 hours."
+   - "Host 192.0.2.100 shows HIGH threat activity. Detected: 3 C2 beacon(s), 2 DNS threat(s), 5 IDS alert(s). MITRE ATT&CK techniques: T1071, T1041, T1048.003. Activity observed over 2.8 hours."
 
 ## Scoring Transparency
 
@@ -573,7 +573,7 @@ for threat in top_threats:
     print(f"  {threat.attack_summary}")
 
 # Get specific host profile
-profile = engine.get_host_profile("192.168.1.100")
+profile = engine.get_host_profile("192.0.2.100")
 print(f"\nBeacons: {profile.beacon_count}")
 print(f"DNS Threats: {profile.dns_threat_count}")
 print(f"Alerts: {profile.alert_count}")
@@ -598,4 +598,4 @@ The unified threat scoring engine successfully:
 ✅ **Exposes** RESTful API endpoints for all functionality
 ✅ **Includes** comprehensive test coverage (76 tests)
 
-The system is production-ready and fully integrated with Hunter's existing architecture.
+The system is production-ready and fully integrated with Vervet's existing architecture.

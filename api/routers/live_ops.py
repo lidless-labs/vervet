@@ -1,5 +1,5 @@
 """
-Live Operations router for Bro Hunter.
+Live Operations router for Vervet.
 Provides real-time ingest endpoints and incremental event queries.
 """
 import json

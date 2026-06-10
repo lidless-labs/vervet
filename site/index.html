@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vervet - see the threats hiding in your network logs</title>
+<meta name="description" content="Vervet reads your Zeek and Suricata logs and tells you which hosts are compromised and why. Beaconing, DNS tunneling, lateral movement, explainable scoring, MITRE ATT&CK mapping. Open source, runs on your hardware.">
+<meta property="og:title" content="Vervet">
+<meta property="og:description" content="Network threat hunting for Zeek and Suricata logs. Explainable per-host risk scores with evidence chains and MITRE ATT&CK mapping. Reads your logs, never touches your network.">
+<meta property="og:url" content="https://vervet.dev">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230B0F14'/%3E%3Ccircle cx='8' cy='10' r='2.4' fill='%234FB3FF'/%3E%3Ccircle cx='22' cy='7' r='2.4' fill='%234FB3FF'/%3E%3Ccircle cx='24' cy='22' r='3' fill='%23E74C3C'/%3E%3Cpath d='M8 10l14-3M8 10l16 12' stroke='%238B98A5' stroke-width='1.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,500..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0F14;
+  --panel:#10161E;
+  --panel-2:#0D1219;
+  --line:#1C2733;
+  --ink:#E8EDF2;
+  --dim:#8B98A5;
+  --faint:#5A6672;
+  --high:#E74C3C;
+  --med:#E67E22;
+  --low:#F1C40F;
+  --ok:#2ECC71;
+  --accent:#4FB3FF;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Archivo",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:15px;
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:56px 56px;opacity:.18;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 500px at 70% -10%,rgba(79,179,255,.10),transparent 60%),
+             radial-gradient(700px 420px at 10% 110%,rgba(231,76,60,.07),transparent 60%);
+}
+.wrap{position:relative;z-index:1;width:100%;max-width:1060px;margin:0 auto;padding:0 24px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:26px 0 0}
+.mark{display:flex;align-items:center;gap:12px;min-width:0;font-family:var(--disp);font-weight:800;font-size:20px;letter-spacing:.04em;color:var(--ink)}
+.mark svg{display:block}
+.tag{font-size:11px;color:var(--faint);border:1px solid var(--line);padding:3px 8px;border-radius:3px;letter-spacing:.08em}
+nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px 22px;font-size:13px}
+nav a{color:var(--dim)}
+nav a:hover{color:var(--ink);text-decoration:none}
+
+/* hero */
+.hero{padding:84px 0 30px;display:grid;grid-template-columns:1fr;gap:48px}
+@media(min-width:920px){.hero{grid-template-columns:5fr 6fr;align-items:center}}
+.hero > *,.steps > *,.grid > *{min-width:0}
+h1{
+  font-family:var(--disp);font-weight:880;font-stretch:125%;
+  font-size:clamp(36px,5.2vw,56px);line-height:1.03;letter-spacing:-.01em;
+  text-transform:uppercase;
+}
+h1 .alt{color:var(--high)}
+.sub{margin-top:22px;color:var(--dim);font-size:15.5px;max-width:48ch}
+.sub b{color:var(--ink);font-weight:600}
+.cta{margin-top:30px;display:flex;gap:14px;flex-wrap:wrap}
+.btn{
+  font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:.04em;
+  padding:11px 18px;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);transition:border-color .15s,transform .15s;
+}
+.btn:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary:hover{border-color:var(--ink)}
+.hero-note{margin-top:14px;font-size:12px;color:var(--faint)}
+
+/* terminal */
+.term{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 30px 80px rgba(0,0,0,.55);
+  max-width:100%;min-width:0;
+  overflow:hidden;font-size:12.5px;line-height:1.75;
+  animation:rise .7s cubic-bezier(.2,.7,.2,1) both .15s;
+}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.term-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.term-title{margin-left:8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--faint);font-size:11.5px;letter-spacing:.06em}
+.term-body{padding:16px 18px;overflow-x:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-family:var(--mono)}
+.c-dim{color:var(--faint)} .c-ink{color:var(--ink)} .c-add{color:var(--ok)} .c-del{color:var(--high)} .c-acc{color:var(--accent)}
+.sev{display:inline-block;padding:0 7px;border-radius:3px;font-weight:600;font-size:11px;letter-spacing:.05em}
+.sev-h{background:rgba(231,76,60,.16);color:var(--high);border:1px solid rgba(231,76,60,.4)}
+.sev-m{background:rgba(230,126,34,.14);color:var(--med);border:1px solid rgba(230,126,34,.4)}
+.blink{animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* sections */
+section{padding:74px 0 0}
+.kicker{font-size:11.5px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase;margin-bottom:14px}
+.kicker::before{content:"// "}
+h2{font-family:var(--disp);font-weight:800;font-stretch:125%;font-size:clamp(24px,3vw,32px);text-transform:uppercase;letter-spacing:.01em;margin-bottom:26px}
+.steps{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+@media(min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
+.step{background:var(--panel);padding:24px 22px}
+.step .n{font-family:var(--disp);font-weight:800;font-size:13px;color:var(--accent);letter-spacing:.1em;margin-bottom:10px}
+.step h3{font-size:15px;font-weight:600;margin-bottom:8px}
+.step p{color:var(--dim);font-size:13.5px}
+
+.grid{display:grid;gap:14px}
+@media(min-width:760px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{border:1px solid var(--line);border-radius:6px;padding:20px;background:rgba(16,22,30,.6)}
+.card h3{font-size:14px;font-weight:600;margin-bottom:7px}
+.card h3 .ico{color:var(--accent);margin-right:8px}
+.card p{color:var(--dim);font-size:13px}
+
+.vendors{display:flex;flex-wrap:wrap;gap:10px}
+.vendor{max-width:100%;border:1px solid var(--line);border-radius:4px;padding:8px 14px;font-size:13px;color:var(--dim);background:var(--panel);overflow-wrap:anywhere}
+.vendor b{color:var(--ink);font-weight:600}
+.vendors-note{margin-top:14px;font-size:12.5px;color:var(--faint)}
+
+/* creed */
+.creed{
+  margin-top:74px;border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:6px;background:var(--panel);padding:34px 30px;
+}
+.creed h2{margin-bottom:12px}
+.creed p{color:var(--dim);max-width:74ch}
+.creed p b{color:var(--ink)}
+.creed p + p{margin-top:14px}
+
+/* quickstart */
+.qs{max-width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:24px;font-size:13px;overflow-x:hidden}
+.qs pre{font-family:var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.9}
+.qs .p{color:var(--faint)} .qs .cmd{color:var(--ink)} .qs .out{color:var(--dim)}
+
+footer{margin:90px 0 40px;padding-top:26px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--faint)}
+footer a{color:var(--dim)}
+
+@media(max-width:640px){
+  .wrap{padding:0 16px}
+  header{align-items:flex-start;flex-wrap:wrap}
+  .mark{flex:1 1 100%;font-size:18px}
+  nav{justify-content:flex-start;gap:6px 14px;font-size:11.5px}
+  .hero{padding-top:64px;gap:36px}
+  .term{font-size:11px}
+  .term-body{padding:14px 12px}
+  .qs{padding:18px 14px;font-size:11.5px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="mark">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="4" fill="#10161E" stroke="#1C2733"/><circle cx="9" cy="11" r="2.2" fill="#4FB3FF"/><circle cx="22" cy="8" r="2.2" fill="#4FB3FF"/><circle cx="23" cy="22" r="2.8" fill="#E74C3C"/><path d="M9 11l13-3M9 11l14 11" stroke="#8B98A5" stroke-width="1.3"/></svg>
+    VERVET
+    <span class="tag">v0.1</span>
+  </div>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="#detect">Detections</a>
+    <a href="#quickstart">Quickstart</a>
+    <a href="https://github.com/solomonneas/vervet">GitHub</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div>
+    <h1>See the threats <span class="alt">hiding</span> in your logs.</h1>
+    <p class="sub">Vervet reads your <b>Zeek and Suricata</b> logs and tells you which hosts are compromised and <b>why</b>. Beacons, DNS tunneling, lateral movement, scored per host with the evidence chain and the <b>MITRE ATT&amp;CK</b> techniques behind it.</p>
+    <div class="cta">
+      <a class="btn primary" href="#quickstart">See the quickstart</a>
+      <a class="btn" href="https://github.com/solomonneas/vervet">View on GitHub</a>
+    </div>
+    <p class="hero-note">Open source. Apache-2.0. Runs on your hardware. Reads your logs, never touches your network.</p>
+  </div>
+
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="term-title">vervet :: analysis :: host 192.0.2.31</span>
+    </div>
+    <div class="term-body"><span class="c-dim">$ vervet analyze ./logs   (zeek + suricata)
+loaded 2,534 conns · 25 dns · 6 alerts</span>
+
+<span class="c-ink">HOST 192.0.2.31</span>                    <span class="sev sev-h">HIGH</span> <span class="c-ink">score 87</span>
+<span class="c-del">- beacon</span> <span class="c-dim">-&gt;</span> <span class="c-acc">203.0.113.50:443</span>  <span class="c-dim">interval 60.0s  jitter 1.2%  120 callbacks</span>
+<span class="c-del">- dns tunneling</span>  <span class="c-dim">base32 subdomains  entropy 4.1</span>
+
+<span class="c-dim">mitre  </span><span class="c-ink">T1071.001</span><span class="c-dim"> Web Protocols  ·  </span><span class="c-ink">T1071.004</span><span class="c-dim"> DNS</span>
+<span class="c-dim">why    regular fixed-interval C2 callbacks;</span>
+<span class="c-dim">       high-entropy DNS used as a covert channel</span>  <span class="c-ink">&#9608;</span><span class="blink c-ink">&#9608;</span></div>
+  </div>
+</div>
+
+<section id="how">
+  <p class="kicker">How it works</p>
+  <h2>Ingest. Detect. Explain.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="n">01 / INGEST</div>
+      <h3>Logs you already collect</h3>
+      <p>Point Vervet at a directory of Zeek logs (conn, dns, http, ssl) and Suricata eve.json. It parses both into one model. Nothing is captured live; nothing is sent to your devices.</p>
+    </div>
+    <div class="step">
+      <div class="n">02 / DETECT</div>
+      <h3>Purpose-built engines</h3>
+      <p>Beaconing, DNS tunneling and DGA, fast-flux, lateral movement, long-lived connections, and Suricata alerts, each scored and folded into one per-host risk number.</p>
+    </div>
+    <div class="step">
+      <div class="n">03 / EXPLAIN</div>
+      <h3>Evidence, not a black box</h3>
+      <p>Every flagged host comes with the reasoning chain that produced its score and the MITRE ATT&amp;CK techniques it maps to. Promote to a case, export IOCs, push to TheHive.</p>
+    </div>
+  </div>
+</section>
+
+<section id="detect">
+  <p class="kicker">What it finds</p>
+  <h2>Detection built for hunters.</h2>
+  <div class="grid">
+    <div class="card"><h3><span class="ico">&#9654;</span>Beaconing / C2</h3><p>Periodic callbacks scored by interval regularity, jitter, and data-size consistency. The signature hunt RITA and AC-Hunter are known for, on Zeek and Suricata.</p></div>
+    <div class="card"><h3><span class="ico">&#9654;</span>DNS threats</h3><p>Tunneling by subdomain entropy and oversized records, DGA domains by lexical analysis, and fast-flux infrastructure rotating through IPs.</p></div>
+    <div class="card"><h3><span class="ico">&#9654;</span>Lateral movement</h3><p>Internal-to-internal connection patterns that suggest an attacker pivoting deeper into the network after the initial foothold.</p></div>
+    <div class="card"><h3><span class="ico">&#9654;</span>Explainable scoring</h3><p>One deterministic 0-100 risk score per host with the exact signals that raised it. No opaque model, no "trust us", you can read every point.</p></div>
+    <div class="card"><h3><span class="ico">&#9654;</span>MITRE ATT&amp;CK</h3><p>Every detection maps to techniques and tactics, consolidated per host, so you can speak the same language as the rest of your SOC.</p></div>
+    <div class="card"><h3><span class="ico">&#9654;</span>Case workflow</h3><p>Promote findings to cases, export IOCs, and push to TheHive, correlate against Wazuh, or enrich from MISP. A web UI and a REST API, in one container.</p></div>
+  </div>
+</section>
+
+<section id="inputs">
+  <p class="kicker">Inputs</p>
+  <h2>Speaks both sensors.</h2>
+  <div class="vendors">
+    <span class="vendor"><b>Zeek</b> conn.log</span>
+    <span class="vendor"><b>Zeek</b> dns.log</span>
+    <span class="vendor"><b>Zeek</b> http / ssl / x509</span>
+    <span class="vendor"><b>Zeek</b> notice.log</span>
+    <span class="vendor"><b>Suricata</b> eve.json</span>
+    <span class="vendor"><b>Suricata</b> alerts</span>
+  </div>
+  <p class="vendors-note">Works offline on archived logs. No live tap, no agent on the sensor, no streaming pipeline required.</p>
+</section>
+
+<div class="creed">
+  <h2>Different threats deserve different alarms.</h2>
+  <p>The vervet monkey is famous for one thing: it gives a <b>different alarm call</b> for an eagle, a snake, and a leopard, so the troop knows exactly what is coming and how to react. Most log tooling gives you one undifferentiated stream of noise.</p>
+  <p>Vervet classifies what it finds, a beacon is not a DGA is not lateral movement, scores it, and tells you the technique behind it. And it earns trust the way a good sensor should: <b>it reads the logs you already have and never touches your network.</b></p>
+</div>
+
+<section id="quickstart">
+  <p class="kicker">Quickstart</p>
+  <h2>One command to a populated dashboard.</h2>
+  <div class="qs"><pre><span class="p">$</span> <span class="cmd">git clone https://github.com/solomonneas/vervet.git</span>
+<span class="p">$</span> <span class="cmd">cd vervet &amp;&amp; docker compose up -d --build</span>
+<span class="out"># open http://localhost:8000  - demo data is seeded on startup</span>
+
+<span class="out"># point it at your own logs instead:</span>
+<span class="p">$</span> <span class="cmd">docker compose run --rm -e VERVET_DEMO_MODE=false -v /var/log/zeek:/logs:ro vervet</span></pre></div>
+  <p class="hero-note" style="margin-top:14px">Apache-2.0. Source, demo, and issues on <a href="https://github.com/solomonneas/vervet">GitHub</a>.</p>
+</section>
+
+<footer>
+  <span>Vervet. Apache-2.0. Built by <a href="https://solomonneas.dev">Solomon Neas</a>.</span>
+  <span><a href="https://github.com/solomonneas/vervet">github.com/solomonneas/vervet</a></span>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,1 +1,1 @@
-"""API routers for Hunter endpoints."""
+"""API routers for Vervet endpoints."""

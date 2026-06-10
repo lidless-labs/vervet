@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Bro Hunter is a full-stack network threat hunting platform. The frontend provides interactive dashboards for exploring threats, while the backend handles log parsing, threat scoring, and MITRE ATT&CK correlation.
+Vervet is a full-stack network threat hunting platform. The frontend provides interactive dashboards for exploring threats, while the backend handles log parsing, threat scoring, and MITRE ATT&CK correlation.
 
 ## Tech Stack
 
@@ -101,7 +101,7 @@ Threats are indexed and cached in memory for fast exploration:
   },
   "flows": [
     {
-      "src_ip": "192.168.1.50",
+      "src_ip": "192.0.2.50",
       "dst_ip": "192.0.2.1",
       "dst_port": 443,
       "protocol": "tcp",
@@ -199,7 +199,7 @@ Get network flows associated with a threat.
 {
   "flows": [
     {
-      "src_ip": "192.168.1.50",
+      "src_ip": "192.0.2.50",
       "dst_ip": "192.0.2.1",
       "dst_port": 443,
       "protocol": "tcp",
@@ -226,4 +226,4 @@ All variants share the same data model and API. Switching themes is instant.
 
 ## Offline Capability
 
-Bro Hunter processes logs entirely on the client and server. After importing a log file, all threat analysis is cached and can be reviewed offline.
+Vervet processes logs entirely on the client and server. After importing a log file, all threat analysis is cached and can be reviewed offline.

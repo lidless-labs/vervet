@@ -1,4 +1,4 @@
-# Bro Hunter Roadmap
+# Vervet Roadmap
 
 ## Reality Check (Feb 21, 2026)
 You're right. We are **past Phase 3**.

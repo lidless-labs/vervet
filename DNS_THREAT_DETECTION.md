@@ -2,7 +2,7 @@
 
 **Detect DNS-based C2 communication and data exfiltration channels.**
 
-Hunter's DNS threat detection analyzes DNS queries to identify:
+Vervet's DNS threat detection analyzes DNS queries to identify:
 - **DNS Tunneling** — Data exfiltration via encoded subdomains or TXT records
 - **DGA Domains** — Algorithmically generated domains for C2 communication
 - **Fast-Flux DNS** — Rapidly changing IP addresses to evade detection
@@ -158,7 +158,7 @@ GET /api/v1/hunt/dns/tunneling
   "tunneling_detections": [
     {
       "domain": "evil-c2.com",
-      "src_ip": "192.168.1.100",
+      "src_ip": "192.0.2.100",
       "query_count": 45,
       "unique_subdomains": 43,
       "avg_subdomain_entropy": 4.2,
@@ -210,7 +210,7 @@ GET /api/v1/hunt/dns/dga
   "dga_detections": [
     {
       "domain": "xqzwfkjhgpmnb.tk",
-      "src_ip": "192.168.1.200",
+      "src_ip": "192.0.2.200",
       "domain_entropy": 3.85,
       "consonant_ratio": 4.2,
       "digit_ratio": 0.0,
@@ -320,7 +320,7 @@ GET /api/v1/hunt/dns/suspicious-patterns
     {
       "pattern_type": "excessive_nxdomain",
       "domain": null,
-      "src_ip": "192.168.1.400",
+      "src_ip": "192.0.2.400",
       "query_count": 50,
       "unique_domains": 47,
       "anomaly_indicators": [
@@ -546,7 +546,7 @@ min_queries_tunneling: 20
 
 ## Integration with Other Detection
 
-DNS threat detection complements other Hunter features:
+DNS threat detection complements other Vervet features:
 
 - **Beaconing Detection** — DNS-based C2 may also show beaconing patterns
 - **Suricata Alerts** — Cross-reference DNS threats with IDS alerts

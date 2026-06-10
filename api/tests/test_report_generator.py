@@ -41,7 +41,7 @@ class TestReportGenerator:
 
         meta = report["report_metadata"]
         assert "generated_at" in meta
-        assert meta["generator"] == "Bro Hunter v0.2.0"
+        assert meta["generator"] == "Vervet v0.2.0"
         assert meta["total_hosts_analyzed"] == 0
 
     @patch('api.services.report_generator.UnifiedThreatEngine')
@@ -52,11 +52,11 @@ class TestReportGenerator:
 
         store = self._mock_store()
         generator = ReportGenerator(store)
-        _html = generator.generate_html()
+        html = generator.generate_html()
 
         assert "<!DOCTYPE html>" in html
         assert "Threat Assessment Report" in html
-        assert "Bro Hunter" in html
+        assert "Vervet" in html
         assert "</html>" in html
 
     @patch('api.services.report_generator.UnifiedThreatEngine')

@@ -89,7 +89,7 @@ const V1App: React.FC = () => {
       <header className="v1-topbar">
         <div className="v1-topbar-brand">
           <Crosshair size={20} aria-hidden="true" />
-          <span>Bro Hunter</span>
+          <span>Vervet</span>
           <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.4, letterSpacing: 1 }}>
             v1 NOC
           </span>

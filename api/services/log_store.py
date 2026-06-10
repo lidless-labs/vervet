@@ -1,5 +1,5 @@
 """
-In-memory log store service for Hunter.
+In-memory log store service for Vervet.
 Provides efficient querying and filtering of parsed network logs.
 """
 from pathlib import Path

@@ -27,7 +27,7 @@ def _build_store() -> LogStore:
     store._add_connection(
         Connection(
             uid="c1",
-            src_ip="10.0.0.5",
+            src_ip="203.0.113.5",
             src_port=51515,
             dst_ip="45.33.32.156",
             dst_port=443,
@@ -44,7 +44,7 @@ def _build_store() -> LogStore:
     store._add_connection(
         Connection(
             uid="c2",
-            src_ip="10.0.0.5",
+            src_ip="203.0.113.5",
             src_port=51516,
             dst_ip="45.33.32.156",
             dst_port=443,
@@ -61,7 +61,7 @@ def _build_store() -> LogStore:
     store._add_dns_query(
         DnsQuery(
             timestamp=now + timedelta(seconds=1),
-            src_ip="10.0.0.5",
+            src_ip="203.0.113.5",
             src_port=53000,
             dst_ip="8.8.8.8",
             dst_port=53,
@@ -75,7 +75,7 @@ def _build_store() -> LogStore:
     store._add_alert(
         Alert(
             timestamp=now + timedelta(seconds=2),
-            src_ip="10.0.0.5",
+            src_ip="203.0.113.5",
             src_port=51515,
             dst_ip="45.33.32.156",
             dst_port=443,
@@ -91,11 +91,11 @@ def _build_store() -> LogStore:
 
 
 def _mock_profiles(now: datetime):
-    beacon = SimpleNamespace(src_ip="10.0.0.5", dst_ip="45.33.32.156", dst_port=443)
+    beacon = SimpleNamespace(src_ip="203.0.113.5", dst_ip="45.33.32.156", dst_port=443)
     dns_threat_data = SimpleNamespace(domain="bad.example")
 
     profile = SimpleNamespace(
-        ip="10.0.0.5",
+        ip="203.0.113.5",
         beacons=[beacon],
         dns_threats=[{"type": "dga", "data": dns_threat_data}],
         first_seen=now.timestamp(),
@@ -105,7 +105,7 @@ def _mock_profiles(now: datetime):
         all_reasons=["Beaconing and suspicious DNS"],
         mitre_techniques={"T1071", "T1071.004"},
     )
-    return {"10.0.0.5": profile}
+    return {"203.0.113.5": profile}
 
 
 def test_build_timeline_generates_human_readable_events():
@@ -118,7 +118,7 @@ def test_build_timeline_generates_human_readable_events():
     assert len(events) > 0
     assert total >= len(events)
     summaries = [e.summary for e in events]
-    assert any("10.0.0.5" in s and "45.33.32.156" in s for s in summaries)
+    assert any("203.0.113.5" in s and "45.33.32.156" in s for s in summaries)
     assert any(e.type == "threat" for e in events)
 
 
@@ -127,7 +127,7 @@ def test_build_timeline_clusters_rapid_events():
     now = store.connections[0].timestamp
     engine = MockThreatEngine(_mock_profiles(now))
 
-    events, _ = build_timeline(store, engine, {"limit": 100, "offset": 0, "src_ip": "10.0.0.5", "dst_ip": "45.33.32.156"})
+    events, _ = build_timeline(store, engine, {"limit": 100, "offset": 0, "src_ip": "203.0.113.5", "dst_ip": "45.33.32.156"})
 
     assert any(e.type == "cluster" for e in events)
 

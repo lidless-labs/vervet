@@ -11,7 +11,7 @@ def create_test_alert(
     signature: str = "Test Signature",
     category: str = "Misc Attack",
     severity: int = 2,
-    src_ip: str = "192.168.1.100",
+    src_ip: str = "192.0.2.100",
     dst_ip: str = "8.8.8.8",
     dst_port: int = 443,
     app_proto: str = "tls",
@@ -186,8 +186,8 @@ class TestSuricataAnalyzer:
         alerts = [
             create_test_alert(
                 signature="Port scan detected",
-                src_ip="10.0.0.100",
-                dst_ip=f"10.0.1.{i}",
+                src_ip="203.0.113.100",
+                dst_ip=f"198.19.1.{i}",
                 category="Detection of a Network Scan",
             )
             for i in range(10)
@@ -209,19 +209,19 @@ class TestSuricataAnalyzer:
             create_test_alert(
                 signature="Port scan",
                 src_ip="8.8.8.8",
-                dst_ip="192.168.1.100",
+                dst_ip="192.0.2.100",
                 category="Detection of a Network Scan",
             ),
             create_test_alert(
                 signature="Exploit attempt CVE-2024-1234",
                 src_ip="8.8.8.8",
-                dst_ip="192.168.1.100",
+                dst_ip="192.0.2.100",
                 category="Exploit",
             ),
             create_test_alert(
                 signature="Malware C2 communication",
                 src_ip="8.8.8.8",
-                dst_ip="192.168.1.100",
+                dst_ip="192.0.2.100",
                 category="Malware Command and Control Activity Detected",
             ),
         ]

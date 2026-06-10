@@ -50,7 +50,7 @@ def _collect_iocs(min_severity: str = "low", types: Optional[str] = None, limit:
                 "first_seen": datetime.fromtimestamp(profile.first_seen, tz=timezone.utc).isoformat() if profile.first_seen else "",
                 "last_seen": datetime.fromtimestamp(profile.last_seen, tz=timezone.utc).isoformat() if profile.last_seen else "",
                 "mitre_techniques": ",".join(sorted(profile.mitre_techniques)),
-                "source": "bro-hunter",
+                "source": "vervet",
                 "context": profile.attack_summary,
                 "beacon_count": profile.beacon_count,
                 "dns_threat_count": profile.dns_threat_count,
@@ -68,7 +68,7 @@ def _collect_iocs(min_severity: str = "low", types: Optional[str] = None, limit:
                     "first_seen": datetime.fromtimestamp(profile.first_seen, tz=timezone.utc).isoformat() if profile.first_seen else "",
                     "last_seen": datetime.fromtimestamp(profile.last_seen, tz=timezone.utc).isoformat() if profile.last_seen else "",
                     "mitre_techniques": ",".join(sorted(profile.mitre_techniques)),
-                    "source": "bro-hunter",
+                    "source": "vervet",
                     "context": f"Related to {ip}",
                     "beacon_count": 0,
                     "dns_threat_count": profile.dns_threat_count,
@@ -112,7 +112,7 @@ def _export_csv(iocs: list) -> StreamingResponse:
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=bro-hunter-iocs.csv"},
+        headers={"Content-Disposition": "attachment; filename=vervet-iocs.csv"},
     )
 
 
@@ -120,22 +120,22 @@ def _export_stix(iocs: list) -> Response:
     """Export as STIX 2.1 Bundle."""
     objects = []
 
-    # Identity for Bro Hunter
-    identity_id = "identity--" + str(uuid.uuid5(uuid.NAMESPACE_URL, "bro-hunter"))
+    # Identity for Vervet
+    identity_id = "identity--" + str(uuid.uuid5(uuid.NAMESPACE_URL, "vervet"))
     objects.append({
         "type": "identity",
         "spec_version": "2.1",
         "id": identity_id,
         "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
         "modified": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        "name": "Bro Hunter",
+        "name": "Vervet",
         "identity_class": "tool",
     })
 
     severity_to_confidence = {"critical": 95, "high": 80, "medium": 60, "low": 40, "info": 20}
 
     for ioc in iocs:
-        indicator_id = "indicator--" + str(uuid.uuid5(uuid.NAMESPACE_URL, f"bro-hunter:{ioc['indicator']}"))
+        indicator_id = "indicator--" + str(uuid.uuid5(uuid.NAMESPACE_URL, f"vervet:{ioc['indicator']}"))
 
         # Build STIX pattern
         if ioc["type"] == "ip":
@@ -177,7 +177,7 @@ def _export_stix(iocs: list) -> Response:
     return Response(
         content=json.dumps(bundle, indent=2),
         media_type="application/json",
-        headers={"Content-Disposition": "attachment; filename=bro-hunter-iocs.stix.json"},
+        headers={"Content-Disposition": "attachment; filename=vervet-iocs.stix.json"},
     )
 
 
@@ -186,8 +186,8 @@ def _export_openioc(iocs: list) -> Response:
     lines = [
         '<?xml version="1.0" encoding="utf-8"?>',
         f'<ioc xmlns="http://schemas.mandiant.com/2010/ioc" id="{uuid.uuid4()}" last-modified="{datetime.now(timezone.utc).isoformat()}">',
-        '  <short_description>Bro Hunter IOC Export</short_description>',
-        '  <description>Indicators of Compromise exported from Bro Hunter threat analysis</description>',
+        '  <short_description>Vervet IOC Export</short_description>',
+        '  <description>Indicators of Compromise exported from Vervet threat analysis</description>',
         '  <definition>',
         '    <Indicator operator="OR">',
     ]
@@ -222,5 +222,5 @@ def _export_openioc(iocs: list) -> Response:
     return Response(
         content=xml_content,
         media_type="application/xml",
-        headers={"Content-Disposition": "attachment; filename=bro-hunter-iocs.xml"},
+        headers={"Content-Disposition": "attachment; filename=vervet-iocs.xml"},
     )

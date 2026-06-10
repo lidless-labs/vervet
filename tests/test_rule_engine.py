@@ -12,7 +12,7 @@ def test_rule_crud(tmp_path):
         severity="medium",
         enabled=True,
         logic="AND",
-        conditions=[RuleCondition(field="src_ip", operator="eq", value="10.0.0.1")],
+        conditions=[RuleCondition(field="src_ip", operator="eq", value="203.0.113.1")],
         actions=["alert"],
     ))
 
@@ -36,5 +36,5 @@ def test_condition_matching(tmp_path):
     cond = RuleCondition(field="dst_port", operator="in", value=[80, 443])
     assert engine._match_condition({"dst_port": 443}, cond)
 
-    cond2 = RuleCondition(field="src_ip", operator="cidr_match", value="10.0.0.0/8")
-    assert engine._match_condition({"src_ip": "10.8.1.2"}, cond2)
+    cond2 = RuleCondition(field="src_ip", operator="cidr_match", value="198.18.0.0/15")
+    assert engine._match_condition({"src_ip": "198.19.81.2"}, cond2)

@@ -175,7 +175,7 @@ const V3App: React.FC<V3AppProps> = ({ basePath = '/' }) => {
       <nav className="v3-sidebar" aria-label="Main navigation">
         <div className="v3-sidebar-brand">
           <ShieldCheck size={22} aria-hidden="true" />
-          <span className="v3-sidebar-brand-text">Bro Hunter</span>
+          <span className="v3-sidebar-brand-text">Vervet</span>
         </div>
 
         <div className="v3-sidebar-nav">
@@ -220,7 +220,7 @@ const V3App: React.FC<V3AppProps> = ({ basePath = '/' }) => {
         <div className="v3-mobile-overlay" onClick={closeMobileNav}>
           <nav className="v3-mobile-nav" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <span style={{ fontWeight: 700, color: '#fff' }}>Bro Hunter</span>
+              <span style={{ fontWeight: 700, color: '#fff' }}>Vervet</span>
               <button onClick={closeMobileNav} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             <div style={{ padding: '8px' }}>

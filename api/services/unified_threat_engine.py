@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from datetime import datetime
 
-from api.models.threat import ThreatScore, ThreatLevel, ThreatIndicator, MitreMapping
+from api.models.threat import ThreatScore, ThreatLevel, ThreatIndicator, IndicatorType, MitreMapping
 from api.models.beacon import BeaconResult
 from api.models.dns_threat import (
     DnsTunnelingResult,
@@ -36,6 +36,7 @@ from api.services.long_connection_analyzer import (
     LongConnectionResult,
 )
 from api.services.log_store import LogStore
+from api.models.suricata import SuricataAlert
 from api.config.mitre_framework import mitre_framework
 
 
@@ -46,6 +47,82 @@ def _get_score(obj) -> float:
         if val is not None:
             return float(val)
     return 0.0
+
+
+def _score_to_threat_level(score: float) -> ThreatLevel:
+    """Map a 0-100 detection score to a threat level."""
+    if score >= 80:
+        return ThreatLevel.CRITICAL
+    if score >= 60:
+        return ThreatLevel.HIGH
+    if score >= 40:
+        return ThreatLevel.MEDIUM
+    return ThreatLevel.LOW
+
+
+def _as_epoch(ts) -> float:
+    """Coerce a timestamp (datetime, float, or None) to a float Unix epoch."""
+    if ts is None:
+        return 0.0
+    if hasattr(ts, "timestamp"):
+        return ts.timestamp()
+    try:
+        return float(ts)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _mappings_from_technique_ids(technique_ids, confidence, host, ts, evidence):
+    """Build MitreMapping objects from bare technique-ID strings.
+
+    Beacons carry only technique IDs (not full mappings), so expand them via
+    the MITRE framework for the consolidated per-host view."""
+    mappings = []
+    for tech_id in technique_ids or []:
+        technique = mitre_framework.get_technique(tech_id)
+        if not technique:
+            continue
+        tactics = mitre_framework.get_tactics_for_technique(tech_id)
+        tactic = tactics[0] if tactics else None
+        mappings.append(MitreMapping(
+            technique_id=tech_id,
+            technique_name=technique.name,
+            tactic=tactic.name if tactic else "Unknown",
+            tactic_id=tactic.tactic_id if tactic else "Unknown",
+            confidence=confidence,
+            evidence=list(evidence),
+            observed_behaviors=[],
+            detection_count=1,
+            first_detected=ts,
+            last_detected=ts,
+            affected_hosts=[host],
+        ))
+    return mappings
+
+
+def _to_suricata_alert(alert) -> SuricataAlert:
+    """Adapt a unified Alert (as held by the log store) to the raw SuricataAlert
+    shape the Suricata analyzer and indicator builder expect."""
+    if isinstance(alert, SuricataAlert):
+        return alert
+    ts = alert.timestamp
+    ts_str = ts.isoformat() if hasattr(ts, "isoformat") else str(ts)
+    return SuricataAlert(
+        timestamp=ts_str,
+        event_type="alert",
+        src_ip=alert.src_ip,
+        src_port=alert.src_port,
+        dest_ip=alert.dst_ip,
+        dest_port=alert.dst_port,
+        proto=alert.proto,
+        alert={
+            "signature": alert.signature,
+            "signature_id": alert.signature_id,
+            "category": alert.category,
+            "severity": alert.severity,
+            "action": alert.action,
+        },
+    )
 
 
 @dataclass
@@ -191,10 +268,11 @@ class UnifiedThreatEngine:
             suspicious = self.dns_analyzer.detect_suspicious_patterns(queries)
             self._dns_threats["suspicious"].extend(suspicious)
 
-        # Suricata alerts
-        self._alerts = self.suricata_analyzer.analyze_alerts(
-            self.log_store.alerts
-        )
+        # Suricata alerts. The log store holds unified Alert objects, but the
+        # Suricata analyzer (and the downstream indicator builder) work on the
+        # raw SuricataAlert shape, so adapt before scoring.
+        suricata_alerts = [_to_suricata_alert(a) for a in self.log_store.alerts]
+        self._alerts = self.suricata_analyzer.analyze_alerts(suricata_alerts)
 
         # Long connections
         self._long_connections = self.long_conn_analyzer.analyze_connections(
@@ -260,36 +338,30 @@ class UnifiedThreatEngine:
 
         # Process alerts
         for alert_score in self._alerts:
-            alert = alert_score.alert
+            alert = alert_score.alert  # SuricataAlert (uses dest_ip, not dst_ip)
             src_ip = alert.src_ip
-            dst_ip = alert.dst_ip
+            dst_ip = alert.dest_ip
 
-            # Add to source profile
-            if src_ip not in profiles:
-                profiles[src_ip] = self._create_profile(src_ip)
-            profile_src = profiles[src_ip]
-            profile_src.alert_count += 1
-            profile_src.alerts.append(alert_score)
-            profile_src.mitre_techniques.update(alert_score.mitre_techniques)
-            profile_src.related_ips.add(dst_ip)
-
-            # Also track destination (victim)
-            if dst_ip not in profiles:
-                profiles[dst_ip] = self._create_profile(dst_ip)
-            profile_dst = profiles[dst_ip]
-            profile_dst.alert_count += 1
-            profile_dst.related_ips.add(src_ip)
-
-            # Timeline
             timestamp = self.suricata_analyzer._parse_timestamp(alert.timestamp)
-            profile_src.attack_timeline.append({
+            timeline_entry = {
                 "timestamp": timestamp,
                 "type": "alert",
                 "description": alert.alert.get("signature", "Unknown alert"),
                 "score": alert_score.score,
-            })
+            }
 
-            self._update_temporal_bounds(profile_src, timestamp, timestamp)
+            # The alert involves both endpoints; surface it on each host's
+            # profile so the attacker and the victim both reflect the activity.
+            for ip, peer in ((src_ip, dst_ip), (dst_ip, src_ip)):
+                if ip not in profiles:
+                    profiles[ip] = self._create_profile(ip)
+                profile = profiles[ip]
+                profile.alert_count += 1
+                profile.alerts.append(alert_score)
+                profile.mitre_techniques.update(alert_score.mitre_techniques)
+                profile.related_ips.add(peer)
+                profile.attack_timeline.append(dict(timeline_entry))
+                self._update_temporal_bounds(profile, timestamp, timestamp)
 
         # Process long connections
         for long_conn in self._long_connections:
@@ -304,8 +376,10 @@ class UnifiedThreatEngine:
             profile.mitre_techniques.update(long_conn.mitre_techniques)
             profile.related_ips.add(conn.dst_ip)
 
-            # Timeline
-            timestamp = conn.timestamp or 0.0
+            # Timeline (conn.timestamp is a datetime; the timeline and temporal
+            # bounds use float epochs, matching the alert/beacon entries)
+            ts = conn.timestamp
+            timestamp = ts.timestamp() if hasattr(ts, "timestamp") else (float(ts) if ts else 0.0)
             profile.attack_timeline.append({
                 "timestamp": timestamp,
                 "type": "long_connection",
@@ -469,39 +543,46 @@ class UnifiedThreatEngine:
         # Beacon indicators
         for beacon in profile.beacons:
             indicators.append(ThreatIndicator(
-                indicator_type="beacon",
+                indicator_type=IndicatorType.IP_ADDRESS,
                 value=f"{beacon.dst_ip}:{beacon.dst_port}",
-                severity=beacon.threat_level,
-                confidence=beacon.confidence,
-                context=f"Beaconing with {beacon.connection_count} connections",
-                first_seen=beacon.first_seen,
-                last_seen=beacon.last_seen,
+                description=(
+                    f"Beaconing to {beacon.dst_ip}:{beacon.dst_port} over "
+                    f"{beacon.connection_count} connections (score {beacon.beacon_score:.0f})"
+                ),
+                severity=_score_to_threat_level(beacon.beacon_score),
+                source="analysis",
+                detection_time=_as_epoch(beacon.first_seen),
+                log_source="conn",
+                context={
+                    "confidence": f"{beacon.confidence:.2f}",
+                    "connection_count": str(beacon.connection_count),
+                    "jitter_pct": f"{beacon.jitter_pct:.1f}",
+                },
+                mitre_technique=(beacon.mitre_techniques[0] if beacon.mitre_techniques else None),
             ))
 
         # DNS indicators
         for dns_threat in profile.dns_threats:
             threat_data = dns_threat["data"]
             threat_type = dns_threat["type"]
-            domain = getattr(threat_data, "domain", "unknown")
+            # Some DNS findings (e.g. host-level "suspicious" patterns) have no
+            # single domain; fall back to the host so the indicator still has a value.
+            domain = getattr(threat_data, "domain", None)
+            value = domain or getattr(threat_data, "src_ip", None) or "dns-anomaly"
             score_val = _get_score(threat_data)
-            # Map score to threat level
-            if score_val >= 80:
-                dns_level = ThreatLevel.CRITICAL
-            elif score_val >= 60:
-                dns_level = ThreatLevel.HIGH
-            elif score_val >= 40:
-                dns_level = ThreatLevel.MEDIUM
-            else:
-                dns_level = ThreatLevel.LOW
             try:
                 indicators.append(ThreatIndicator(
-                    indicator_type="behavior",
-                    value=domain,
-                    severity=getattr(threat_data, 'threat_level', dns_level),
-                    confidence=getattr(threat_data, 'confidence', 0.5),
-                    context=f"DNS {threat_type} detected",
-                    first_seen=getattr(threat_data, "first_seen", 0.0),
-                    last_seen=getattr(threat_data, "last_seen", 0.0),
+                    indicator_type=IndicatorType.DOMAIN if domain else IndicatorType.BEHAVIOR,
+                    value=str(value),
+                    description=f"DNS {threat_type} detected for {value}",
+                    severity=_score_to_threat_level(score_val),
+                    source="analysis",
+                    detection_time=_as_epoch(getattr(threat_data, "first_seen", 0.0)),
+                    log_source="dns",
+                    context={
+                        "threat_type": str(threat_type),
+                        "confidence": f"{getattr(threat_data, 'confidence', 0.5):.2f}",
+                    },
                 ))
             except Exception:
                 pass  # Skip malformed DNS indicators
@@ -511,26 +592,42 @@ class UnifiedThreatEngine:
         for alert_score in top_alerts:
             alert = alert_score.alert
             indicators.append(ThreatIndicator(
-                indicator_type="ids_alert",
+                indicator_type=IndicatorType.BEHAVIOR,
                 value=alert.alert.get("signature", "Unknown"),
+                description=(
+                    f"Suricata alert: {alert.alert.get('signature', 'Unknown')} "
+                    f"(category {alert.alert.get('category', 'Unknown')})"
+                ),
                 severity=alert_score.threat_level,
-                confidence=alert_score.confidence,
-                context=f"Category: {alert.alert.get('category', 'Unknown')}",
-                first_seen=self.suricata_analyzer._parse_timestamp(alert.timestamp),
-                last_seen=self.suricata_analyzer._parse_timestamp(alert.timestamp),
+                source="suricata",
+                detection_time=self.suricata_analyzer._parse_timestamp(alert.timestamp),
+                log_source="suricata",
+                context={
+                    "category": str(alert.alert.get("category", "Unknown")),
+                    "confidence": f"{alert_score.confidence:.2f}",
+                },
+                mitre_technique=(alert_score.mitre_techniques[0] if alert_score.mitre_techniques else None),
             ))
 
         # Long connection indicators
         for long_conn in profile.long_connections:
             conn = long_conn.connection
             indicators.append(ThreatIndicator(
-                indicator_type="long_connection",
+                indicator_type=IndicatorType.IP_ADDRESS,
                 value=f"{conn.dst_ip}:{conn.dst_port}",
+                description=(
+                    f"Long connection to {conn.dst_ip}:{conn.dst_port} "
+                    f"({long_conn.duration_seconds:.0f}s, {conn.bytes_sent:,} bytes sent)"
+                ),
                 severity=long_conn.threat_level,
-                confidence=long_conn.confidence,
-                context=f"Duration: {long_conn.duration_seconds:.0f}s, {conn.bytes_sent:,} bytes sent",
-                first_seen=conn.timestamp or 0.0,
-                last_seen=conn.timestamp or 0.0,
+                source="analysis",
+                detection_time=_as_epoch(conn.timestamp),
+                log_source="conn",
+                context={
+                    "confidence": f"{long_conn.confidence:.2f}",
+                    "duration_seconds": f"{long_conn.duration_seconds:.0f}",
+                },
+                mitre_technique=(long_conn.mitre_techniques[0] if long_conn.mitre_techniques else None),
             ))
 
         return indicators
@@ -540,10 +637,23 @@ class UnifiedThreatEngine:
         # Collect all mappings
         all_mappings: Dict[str, List[MitreMapping]] = defaultdict(list)
 
-        # From beacons
+        # From beacons (BeaconResult carries technique IDs, not full mappings)
         for beacon in profile.beacons:
-            for mapping in beacon.mitre_mappings:
-                all_mappings[mapping.technique_id].append(mapping)
+            if getattr(beacon, "mitre_mappings", None):
+                for mapping in beacon.mitre_mappings:
+                    all_mappings[mapping.technique_id].append(mapping)
+            else:
+                for mapping in _mappings_from_technique_ids(
+                    getattr(beacon, "mitre_techniques", []),
+                    confidence=beacon.confidence,
+                    host=beacon.src_ip,
+                    ts=_as_epoch(beacon.first_seen),
+                    evidence=[
+                        f"Beaconing to {beacon.dst_ip}:{beacon.dst_port} "
+                        f"({beacon.connection_count} connections)"
+                    ],
+                ):
+                    all_mappings[mapping.technique_id].append(mapping)
 
         # From DNS threats
         for dns_threat in profile.dns_threats:

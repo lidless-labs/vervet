@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.dependencies.auth import api_key_auth
 from api.services.case_manager import CaseManager
-from api.services.thehive_client import TheHiveClient, map_brohunter_case_to_thehive
+from api.services.thehive_client import TheHiveClient, map_vervet_case_to_thehive
 from api.services.wazuh_client import WazuhClient, normalize_wazuh_hits
 from api.services.misp_client import MISPClient, normalize_misp_hits
 
@@ -55,7 +55,7 @@ async def create_thehive_case_from_case(
             detail="TheHive integration not configured. Set THEHIVE_URL and THEHIVE_API_KEY.",
         )
 
-    payload = map_brohunter_case_to_thehive(case)
+    payload = map_vervet_case_to_thehive(case)
 
     try:
         result = client.create_case(payload)

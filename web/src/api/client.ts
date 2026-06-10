@@ -1,5 +1,5 @@
 /**
- * Fetch wrapper for Bro Hunter API.
+ * Fetch wrapper for Vervet API.
  * Provides base URL config, auth headers, and error handling.
  */
 

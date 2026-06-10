@@ -152,7 +152,7 @@ const LiveCapture: React.FC<LiveCaptureProps> = ({ className = '' }) => {
               type="text"
               value={filter}
               onChange={e => setFilter(e.target.value)}
-              placeholder="e.g., port 443, host 10.0.0.1, tcp"
+              placeholder="e.g., port 443, host 203.0.113.1, tcp"
               className="w-full bg-gray-800 text-gray-200 text-sm border border-gray-700 rounded-lg px-3 py-2"
             />
           </div>

@@ -72,7 +72,7 @@ const HostRanking: React.FC = () => {
   return (
     <div>
       <h1 className="v3-page-title">Host Ranking</h1>
-      <p className="v3-page-subtitle">Ranked host threat severity with AC-Hunter style prioritization</p>
+      <p className="v3-page-subtitle">Hosts ranked by composite threat severity, highest risk first</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12, marginBottom: 16 }}>
         <div className="v3-kpi"><div>Total Hosts</div><strong>{hosts.length}</strong></div>

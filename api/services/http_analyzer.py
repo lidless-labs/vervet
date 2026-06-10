@@ -124,7 +124,7 @@ class HttpAnalyzer:
     def generate_demo_data(self, count: int = 80) -> list[HttpSession]:
         now = datetime.now()
         sessions = []
-        src_ip = "10.0.1.50"
+        src_ip = "198.19.1.50"
         normal_uris = ["/", "/index.html", "/api/v1/users", "/assets/main.css", "/favicon.ico", "/api/health"]
 
         for i in range(count):

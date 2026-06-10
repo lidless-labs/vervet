@@ -42,7 +42,11 @@ class TestZeekParser:
 
     def test_parse_timestamp(self):
         """Test Zeek timestamp parsing."""
-        ts = 1769645917.099166
+        # Epoch for 2026-01-28 19:02:37.099166 UTC. The parser returns a
+        # UTC-aware datetime, so date components are asserted in UTC. (The
+        # previous epoch 1769645917 was actually 2026-01-29 00:18 UTC, which
+        # contradicted the day==28 assertion below.)
+        ts = 1769626957.099166
         dt = ZeekParser.parse_timestamp(ts)
 
         assert isinstance(dt, datetime)
@@ -102,21 +106,21 @@ class TestZeekParser:
 
     def test_parse_line(self):
         """Test parsing a single JSON line."""
-        line = '{"ts": 1769645917.099166, "uid": "C5T0tmWEJmx88sZ8Ua", "id_orig_h": "10.0.0.5", "id_orig_p": 54321, "id_resp_h": "157.240.3.35", "id_resp_p": 0, "proto": "icmp", "service": null, "duration": 0.186}'
+        line = '{"ts": 1769645917.099166, "uid": "C5T0tmWEJmx88sZ8Ua", "id_orig_h": "203.0.113.5", "id_orig_p": 54321, "id_resp_h": "157.240.3.35", "id_resp_p": 0, "proto": "icmp", "service": null, "duration": 0.186}'
 
         entry = ZeekParser.parse_line(line, "conn")
 
         assert entry is not None
         assert isinstance(entry, ConnLog)
         assert entry.uid == "C5T0tmWEJmx88sZ8Ua"
-        assert entry.id_orig_h == "10.0.0.5"
+        assert entry.id_orig_h == "203.0.113.5"
 
     def test_validate_log_entry(self):
         """Test log entry validation."""
         valid_entry = {
             "ts": 1769645917.099166,
             "uid": "C5T0tmWEJmx88sZ8Ua",
-            "id_orig_h": "10.0.0.5",
+            "id_orig_h": "203.0.113.5",
             "id_orig_p": 54321,
             "id_resp_h": "157.240.3.35",
             "id_resp_p": 0,
@@ -196,7 +200,7 @@ class TestSuricataParser:
 
     def test_parse_line(self):
         """Test parsing a single eve.json line."""
-        line = '{"timestamp": "2026-01-28T19:02:37.099166Z", "flow_id": 7091217, "event_type": "alert", "src_ip": "185.199.108.153", "src_port": 55641, "dest_ip": "192.168.1.10", "dest_port": 8080, "proto": "UDP", "alert": {"action": "allowed", "gid": 1, "signature_id": 2654741, "rev": 10, "signature": "ET SCAN Test", "category": "Misc", "severity": 1}}'
+        line = '{"timestamp": "2026-01-28T19:02:37.099166Z", "flow_id": 7091217, "event_type": "alert", "src_ip": "185.199.108.153", "src_port": 55641, "dest_ip": "192.0.2.10", "dest_port": 8080, "proto": "UDP", "alert": {"action": "allowed", "gid": 1, "signature_id": 2654741, "rev": 10, "signature": "ET SCAN Test", "category": "Misc", "severity": 1}}'
 
         entry = SuricataParser.parse_line(line)
 
@@ -213,7 +217,7 @@ class TestSuricataParser:
             "event_type": "alert",
             "src_ip": "185.199.108.153",
             "src_port": 55641,
-            "dest_ip": "192.168.1.10",
+            "dest_ip": "192.0.2.10",
             "dest_port": 8080,
             "proto": "UDP",
             "alert": {

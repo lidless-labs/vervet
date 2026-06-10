@@ -15,7 +15,7 @@ def _build_store() -> LogStore:
         store._add_connection(
             Connection(
                 uid=f"base-{i}",
-                src_ip=f"10.0.0.{(i % 8) + 1}",
+                src_ip=f"203.0.113.{(i % 8) + 1}",
                 src_port=50000 + i,
                 dst_ip=f"198.51.100.{(i % 12) + 1}",
                 dst_port=443,
@@ -34,7 +34,7 @@ def _build_store() -> LogStore:
         store._add_dns_query(
             DnsQuery(
                 timestamp=base + timedelta(minutes=i),
-                src_ip=f"10.0.0.{(i % 6) + 1}",
+                src_ip=f"203.0.113.{(i % 6) + 1}",
                 src_port=53000 + i,
                 dst_ip="8.8.8.8",
                 dst_port=53,
@@ -60,7 +60,7 @@ def test_detect_returns_expected_shape():
         store._add_connection(
             Connection(
                 uid=f"anom-{i}",
-                src_ip="10.0.0.250",
+                src_ip="203.0.113.250",
                 src_port=61000 + i,
                 dst_ip="203.0.113.99",
                 dst_port=5555,
@@ -77,7 +77,7 @@ def test_detect_returns_expected_shape():
         store._add_dns_query(
             DnsQuery(
                 timestamp=spike_time + timedelta(seconds=i),
-                src_ip="10.0.0.250",
+                src_ip="203.0.113.250",
                 src_port=54000 + i,
                 dst_ip="8.8.8.8",
                 dst_port=53,

@@ -55,7 +55,7 @@ const IocExport: React.FC<IocExportProps> = ({ className = '', compact = false }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `bro-hunter-iocs${FORMAT_CONFIG[format].ext}`;
+      a.download = `vervet-iocs${FORMAT_CONFIG[format].ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

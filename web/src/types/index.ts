@@ -1,5 +1,5 @@
 /**
- * TypeScript type definitions for Hunter frontend.
+ * TypeScript type definitions for Vervet frontend.
  * Mirrors backend Pydantic models for type safety.
  */
 

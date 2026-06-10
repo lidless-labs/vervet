@@ -90,7 +90,7 @@ const V2App: React.FC = () => {
       <header className="v2-topbar">
         <div className="v2-prompt" aria-hidden="true">
           <span className="v2-prompt-user">root</span>
-          <span className="v2-prompt-host">@brohunter</span>
+          <span className="v2-prompt-host">@vervet</span>
           <span className="v2-prompt-path">:~$</span>
           <span style={{ color: '#00FF41' }}>./bro_hunter --mode=live</span>
           <span className="v2-prompt-cursor" />

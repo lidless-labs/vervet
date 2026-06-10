@@ -31,7 +31,7 @@ function generateHunts(): HuntResult[] {
       time_range_end: BASE_TS + 72 * 3600,
       summary: 'Identified 8 high-confidence C2 beacon patterns across 6 internal hosts. Primary beacon targets include known Tor exit nodes and bulletproof hosting infrastructure.',
       recommendations: [
-        'Immediately isolate 10.0.1.15 and 192.168.10.22',
+        'Immediately isolate 198.19.1.15 and 198.18.10.22',
         'Block outbound traffic to 185.220.101.34, 198.98.56.78, 162.247.74.27',
         'Deploy SSL inspection on port 443/8443 for affected subnets',
         'Conduct memory forensics on identified hosts',
@@ -56,12 +56,12 @@ function generateHunts(): HuntResult[] {
       analysis_end: BASE_TS + 74 * 3600,
       time_range_start: BASE_TS - 336 * 3600,
       time_range_end: BASE_TS + 74 * 3600,
-      summary: 'Confirmed DNS tunneling activity from 10.0.2.5 to multiple external resolvers. Estimated 7.2MB exfiltrated via high-entropy subdomain queries.',
+      summary: 'Confirmed DNS tunneling activity from 198.19.2.5 to multiple external resolvers. Estimated 7.2MB exfiltrated via high-entropy subdomain queries.',
       recommendations: [
         'Enforce DNS-over-HTTPS policy to internal resolvers only',
         'Implement DNS query length and entropy monitoring',
         'Block identified tunneling domains at DNS sinkhole',
-        'Investigate 10.0.2.5 for installed exfiltration tooling',
+        'Investigate 198.19.2.5 for installed exfiltration tooling',
       ],
       false_positive_likelihood: 'Very Low',
       analyst: 'CYBER-AUTO',
@@ -85,7 +85,7 @@ function generateHunts(): HuntResult[] {
       summary: 'Detected 12 unique DGA domain patterns from 5 internal hosts. Domains exhibit high entropy (>3.8), elevated consonant ratios.',
       recommendations: [
         'Deploy real-time DGA detection at DNS resolver with ML-based classifier',
-        'Quarantine 172.16.0.10',
+        'Quarantine 198.18.160.10',
         'Cross-reference DGA domains with threat intel feeds',
         'Implement DNS response policy zones for known DGA TLDs',
       ],

@@ -14,7 +14,7 @@ def _build_store() -> LogStore:
         store._add_connection(
             Connection(
                 uid=f"conn-{i}",
-                src_ip=f"10.0.0.{(i % 5) + 1}",
+                src_ip=f"203.0.113.{(i % 5) + 1}",
                 src_port=50000 + i,
                 dst_ip=f"198.51.100.{(i % 7) + 1}",
                 dst_port=443 if i % 2 == 0 else 53,
@@ -33,7 +33,7 @@ def _build_store() -> LogStore:
         store._add_dns_query(
             DnsQuery(
                 timestamp=now + timedelta(minutes=i),
-                src_ip=f"10.0.0.{(i % 4) + 1}",
+                src_ip=f"203.0.113.{(i % 4) + 1}",
                 src_port=53000 + i,
                 dst_ip="8.8.8.8",
                 dst_port=53,
@@ -71,7 +71,7 @@ def test_compare_returns_deviation_list():
         store._add_connection(
             Connection(
                 uid=f"spike-{i}",
-                src_ip="10.0.0.99",
+                src_ip="203.0.113.99",
                 src_port=51000 + i,
                 dst_ip="203.0.113.250",
                 dst_port=4444,

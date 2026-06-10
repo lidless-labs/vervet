@@ -68,7 +68,7 @@ const HuntResults: React.FC = () => {
     `Isolate high-confidence C2 beacons: ${highBeacons.slice(0, 3).map((b) => `${b.src_ip}→${b.dst_ip}`).join(', ')}. These show strong periodic communication patterns with known threat infrastructure.`,
     `Block DNS tunneling domains at perimeter resolver: ${dns.filter((d) => d.threat_type === 'tunneling').slice(0, 3).map((d) => d.domain).join(', ')}. Estimated data exfiltration exceeds acceptable threshold.`,
     `Blackhole DGA domains and deploy sinkholing for: ${dns.filter((d) => d.threat_type === 'dga').slice(0, 3).map((d) => d.domain).join(', ')}. Pattern matches known malware family signatures.`,
-    `Investigate internal host ${criticalThreats[0]?.entity ?? '10.0.1.15'} for compromise indicators. Multiple detection vectors converge on this endpoint.`,
+    `Investigate internal host ${criticalThreats[0]?.entity ?? '198.19.1.15'} for compromise indicators. Multiple detection vectors converge on this endpoint.`,
     `Deploy enhanced monitoring on ports 443, 8443, 4443 for encrypted C2 traffic. ${highBeacons.filter((b) => [443, 8443, 4443].includes(b.dst_port)).length} beacons detected on these ports.`,
     `Review SSL certificate validation across proxy infrastructure. Certificate mismatches detected in ${criticalThreats.filter((a) => a.reasons.some((r) => r.toLowerCase().includes('cert'))).length} critical alerts.`,
     `Implement DNS response policy zones (RPZ) for fast-flux domains. ${dns.filter((d) => d.threat_type === 'fast_flux').length} fast-flux networks identified with rapidly rotating A records.`,
@@ -110,7 +110,7 @@ const HuntResults: React.FC = () => {
           <div className="v2-stat-line">
             <span className="v2-stat-key">analyst</span>
             <span className="v2-stat-eq">=</span>
-            <span className="v2-stat-value">root@brohunter</span>
+            <span className="v2-stat-value">root@vervet</span>
           </div>
           <div className="v2-stat-line">
             <span className="v2-stat-key">generated</span>

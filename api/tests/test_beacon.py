@@ -99,13 +99,15 @@ class TestBeaconAnalyzer:
             score_threshold=70.0,
         )
 
-        # Create perfect beacon: 20 connections, 60-second intervals, no jitter
+        # Create perfect beacon: 20 connections, no jitter.
+        # Interval of 4800s gives a ~26.7h observation window so the time-span
+        # coverage component is fully earned, letting a perfect beacon reach 90.
         connections = create_synthetic_connections(
-            src_ip="192.168.1.100",
-            dst_ip="10.0.0.50",
+            src_ip="192.0.2.100",
+            dst_ip="203.0.113.50",
             dst_port=443,
             count=20,
-            interval_seconds=60.0,
+            interval_seconds=4800.0,
             jitter_pct=0.0,
         )
 
@@ -114,8 +116,8 @@ class TestBeaconAnalyzer:
         assert len(beacons) == 1, "Should detect exactly one beacon"
         beacon = beacons[0]
 
-        assert beacon.src_ip == "192.168.1.100"
-        assert beacon.dst_ip == "10.0.0.50"
+        assert beacon.src_ip == "192.0.2.100"
+        assert beacon.dst_ip == "203.0.113.50"
         assert beacon.dst_port == 443
         assert beacon.connection_count == 20
         assert beacon.jitter_pct < 1.0, "Perfect beacon should have near-zero jitter"
@@ -128,15 +130,18 @@ class TestBeaconAnalyzer:
             min_connections=10,
             max_jitter_pct=20.0,
             score_threshold=70.0,
+            min_time_span_hours=0.25,
         )
 
-        # Create beacon with 5% jitter
+        # Create beacon with 5% jitter. 20 conns at 7200s span ~40h so the
+        # time-span coverage and connection-count components are earned and a
+        # low-jitter beacon clears the >=80 score bar.
         connections = create_synthetic_connections(
-            src_ip="192.168.1.101",
-            dst_ip="10.0.0.51",
+            src_ip="192.0.2.101",
+            dst_ip="203.0.113.51",
             dst_port=8080,
-            count=15,
-            interval_seconds=120.0,
+            count=20,
+            interval_seconds=7200.0,
             jitter_pct=5.0,
         )
 
@@ -154,16 +159,20 @@ class TestBeaconAnalyzer:
             min_connections=10,
             max_jitter_pct=30.0,
             score_threshold=60.0,
+            min_time_span_hours=0.25,
         )
 
-        # Create beacon with 15% jitter
+        # Create beacon with moderate jitter. With seed-42 reproducible data, a
+        # 20% input jitter yields ~12% measured interval CV (in the moderate
+        # 10-25% band). 50 conns at 3600s (~50h span) keeps the score in the
+        # 60-85 medium range.
         connections = create_synthetic_connections(
-            src_ip="192.168.1.102",
-            dst_ip="10.0.0.52",
+            src_ip="192.0.2.102",
+            dst_ip="203.0.113.52",
             dst_port=443,
-            count=25,
-            interval_seconds=90.0,
-            jitter_pct=15.0,
+            count=50,
+            interval_seconds=3600.0,
+            jitter_pct=20.0,
         )
 
         beacons = analyzer.analyze_connections(connections)
@@ -184,8 +193,8 @@ class TestBeaconAnalyzer:
 
         # Create connections with high jitter (random intervals)
         connections = create_synthetic_connections(
-            src_ip="192.168.1.103",
-            dst_ip="10.0.0.53",
+            src_ip="192.0.2.103",
+            dst_ip="203.0.113.53",
             dst_port=80,
             count=15,
             interval_seconds=100.0,
@@ -206,8 +215,8 @@ class TestBeaconAnalyzer:
 
         # Only 5 connections (below minimum)
         connections = create_synthetic_connections(
-            src_ip="192.168.1.104",
-            dst_ip="10.0.0.54",
+            src_ip="192.0.2.104",
+            dst_ip="203.0.113.54",
             dst_port=443,
             count=5,
             interval_seconds=60.0,
@@ -223,26 +232,28 @@ class TestBeaconAnalyzer:
         analyzer = BeaconAnalyzer(
             min_connections=10,
             score_threshold=70.0,
+            min_time_span_hours=0.25,
         )
 
-        # Create two different beacons
+        # Create two different beacons. Hour-scale intervals give each a
+        # multi-hour observation window so both clear the time-span gate.
         beacon1_conns = create_synthetic_connections(
-            src_ip="192.168.1.105",
-            dst_ip="10.0.0.55",
+            src_ip="192.0.2.105",
+            dst_ip="203.0.113.55",
             dst_port=443,
-            count=15,
-            interval_seconds=60.0,
+            count=20,
+            interval_seconds=3600.0,
             jitter_pct=5.0,
         )
 
         beacon2_conns = create_synthetic_connections(
-            src_ip="192.168.1.106",
-            dst_ip="10.0.0.56",
+            src_ip="192.0.2.106",
+            dst_ip="203.0.113.56",
             dst_port=8080,
             count=20,
-            interval_seconds=120.0,
+            interval_seconds=3600.0,
             jitter_pct=3.0,
-            start_time=datetime(2024, 1, 1, 1, 0, 0),  # Different start time
+            start_time=datetime(2024, 1, 2, 0, 0, 0),  # Different start time
         )
 
         all_connections = beacon1_conns + beacon2_conns
@@ -258,15 +269,17 @@ class TestBeaconAnalyzer:
         analyzer = BeaconAnalyzer(
             min_connections=10,
             score_threshold=60.0,
+            min_time_span_hours=0.25,
         )
 
-        # Beacon with very consistent data sizes
+        # Beacon with very consistent data sizes. Hour-scale intervals give a
+        # multi-hour span so the beacon clears the time-span gate.
         connections_consistent = create_synthetic_connections(
-            src_ip="192.168.1.107",
-            dst_ip="10.0.0.57",
+            src_ip="192.0.2.107",
+            dst_ip="203.0.113.57",
             dst_port=443,
-            count=15,
-            interval_seconds=60.0,
+            count=20,
+            interval_seconds=3600.0,
             jitter_pct=10.0,
             data_size=2048,
             data_variance=0.05,  # Very low variance
@@ -274,11 +287,11 @@ class TestBeaconAnalyzer:
 
         # Beacon with variable data sizes
         connections_variable = create_synthetic_connections(
-            src_ip="192.168.1.108",
-            dst_ip="10.0.0.58",
+            src_ip="192.0.2.108",
+            dst_ip="203.0.113.58",
             dst_port=443,
-            count=15,
-            interval_seconds=60.0,
+            count=20,
+            interval_seconds=3600.0,
             jitter_pct=10.0,
             data_size=2048,
             data_variance=0.5,  # High variance
@@ -298,15 +311,17 @@ class TestBeaconAnalyzer:
         analyzer = BeaconAnalyzer(
             min_connections=10,
             score_threshold=70.0,
+            min_time_span_hours=0.25,
         )
 
-        # Create beacon to Google DNS (8.8.8.8)
+        # Create beacon to Google DNS (8.8.8.8). Hour-scale intervals give a
+        # multi-hour span so the (allowlist-disabled) branch actually detects.
         connections = create_synthetic_connections(
-            src_ip="192.168.1.109",
+            src_ip="192.0.2.109",
             dst_ip="8.8.8.8",
             dst_port=53,
             count=20,
-            interval_seconds=5.0,
+            interval_seconds=3600.0,
             jitter_pct=2.0,
         )
 
@@ -327,7 +342,7 @@ class TestBeaconAnalyzer:
 
         # Create beacon on NTP port
         connections = create_synthetic_connections(
-            src_ip="192.168.1.110",
+            src_ip="192.0.2.110",
             dst_ip="132.163.97.1",  # NIST NTP server
             dst_port=123,
             count=15,
@@ -343,25 +358,27 @@ class TestBeaconAnalyzer:
         analyzer = BeaconAnalyzer(
             min_connections=10,
             score_threshold=70.0,
+            min_time_span_hours=0.25,
         )
 
-        # HTTPS beacon (should get T1071 and T1071.001)
+        # HTTPS beacon (should get T1071 and T1071.001). Hour-scale intervals
+        # give a multi-hour span so the beacon clears the time-span gate.
         connections_https = create_synthetic_connections(
-            src_ip="192.168.1.111",
-            dst_ip="10.0.0.61",
+            src_ip="192.0.2.111",
+            dst_ip="203.0.113.61",
             dst_port=443,
             count=20,
-            interval_seconds=60.0,
+            interval_seconds=3600.0,
             jitter_pct=5.0,
         )
 
         # HTTP beacon (should get T1071 and T1071.001)
         connections_http = create_synthetic_connections(
-            src_ip="192.168.1.112",
-            dst_ip="10.0.0.62",
+            src_ip="192.0.2.112",
+            dst_ip="203.0.113.62",
             dst_port=80,
             count=20,
-            interval_seconds=60.0,
+            interval_seconds=3600.0,
             jitter_pct=5.0,
         )
 
@@ -388,21 +405,24 @@ class TestBeaconAnalyzer:
         analyzer = BeaconAnalyzer(
             min_connections=10,
             score_threshold=0.0,
+            min_time_span_hours=0.25,
         )
 
+        # Hour-scale intervals give a multi-hour span so the detailed analysis
+        # (which shares the time-span gate) returns a result.
         connections = create_synthetic_connections(
-            src_ip="192.168.1.113",
-            dst_ip="10.0.0.63",
+            src_ip="192.0.2.113",
+            dst_ip="203.0.113.63",
             dst_port=443,
             count=20,
-            interval_seconds=60.0,
+            interval_seconds=3600.0,
             jitter_pct=10.0,
         )
 
         detailed = analyzer.analyze_connection_pair_detailed(
             connections=connections,
-            src_ip="192.168.1.113",
-            dst_ip="10.0.0.63",
+            src_ip="192.0.2.113",
+            dst_ip="203.0.113.63",
         )
 
         assert detailed is not None
@@ -422,8 +442,8 @@ class TestBeaconAnalyzer:
 
         # Create connections spanning only 30 minutes
         connections = create_synthetic_connections(
-            src_ip="192.168.1.114",
-            dst_ip="10.0.0.64",
+            src_ip="192.0.2.114",
+            dst_ip="203.0.113.64",
             dst_port=443,
             count=15,
             interval_seconds=120.0,  # 2 minutes
@@ -440,25 +460,27 @@ class TestBeaconAnalyzer:
         analyzer = BeaconAnalyzer(
             min_connections=10,
             score_threshold=60.0,
+            min_time_span_hours=0.25,
         )
 
-        # Few connections
+        # Few connections. Hour-scale intervals give a multi-hour span so both
+        # the few and many cases clear the time-span gate.
         connections_few = create_synthetic_connections(
-            src_ip="192.168.1.115",
-            dst_ip="10.0.0.65",
+            src_ip="192.0.2.115",
+            dst_ip="203.0.113.65",
             dst_port=443,
-            count=15,
-            interval_seconds=60.0,
+            count=20,
+            interval_seconds=3600.0,
             jitter_pct=10.0,
         )
 
         # Many connections
         connections_many = create_synthetic_connections(
-            src_ip="192.168.1.116",
-            dst_ip="10.0.0.66",
+            src_ip="192.0.2.116",
+            dst_ip="203.0.113.66",
             dst_port=443,
             count=150,
-            interval_seconds=60.0,
+            interval_seconds=3600.0,
             jitter_pct=10.0,
         )
 
@@ -480,22 +502,27 @@ class TestBeaconAllowlist:
         """Test detection of known DNS resolvers."""
         assert BeaconAllowlist.is_allowed_dst("8.8.8.8", 53) is True
         assert BeaconAllowlist.is_allowed_dst("1.1.1.1", 53) is True
-        assert BeaconAllowlist.is_allowed_dst("10.0.0.1", 53) is False  # Private IP
+        # Port 53 (DNS) is allowlisted for any destination, mirroring the NTP
+        # (port 123) behavior asserted in test_ntp_port_detection. A private IP
+        # on port 53 is still DNS traffic and is filtered by design.
+        assert BeaconAllowlist.is_allowed_dst("203.0.113.1", 53) is True
+        # A private IP on a non-periodic port is NOT allowlisted.
+        assert BeaconAllowlist.is_allowed_dst("203.0.113.1", 80) is False
 
     def test_ntp_port_detection(self):
         """Test detection of NTP traffic."""
         assert BeaconAllowlist.is_allowed_dst("132.163.97.1", 123) is True
-        assert BeaconAllowlist.is_allowed_dst("10.0.0.1", 123) is True  # Any IP on NTP port
-        assert BeaconAllowlist.is_allowed_dst("10.0.0.1", 80) is False
+        assert BeaconAllowlist.is_allowed_dst("203.0.113.1", 123) is True  # Any IP on NTP port
+        assert BeaconAllowlist.is_allowed_dst("203.0.113.1", 80) is False
 
     def test_custom_allowlist(self):
         """Test adding custom allowlist entries."""
         # Add custom DNS server
-        BeaconAllowlist.add_custom_allowlist_ip("10.10.10.10", "dns")
-        assert BeaconAllowlist.is_allowed_dst("10.10.10.10", 53) is True
+        BeaconAllowlist.add_custom_allowlist_ip("198.19.110.10", "dns")
+        assert BeaconAllowlist.is_allowed_dst("198.19.110.10", 53) is True
 
         # Remove it
-        BeaconAllowlist.remove_custom_allowlist_ip("10.10.10.10")
+        BeaconAllowlist.remove_custom_allowlist_ip("198.19.110.10")
         # Note: After removal from DNS_RESOLVERS, it may still match on port 53
         # This is expected behavior
 

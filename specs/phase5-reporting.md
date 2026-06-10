@@ -1,12 +1,12 @@
 # Phase 5: Reporting & Analyst Workflow
 
 ## Context
-Bro Hunter is positioning against AC-Hunter (Active Countermeasures) for SEU.
+Vervet is positioning against AC-Hunter (Active Countermeasures) for SEU.
 AC-Hunter's key features: automated hourly threat hunts, systems sorted by threat severity,
 deep dive into all communications per system, syslog/Slack integration, beaconing + long
 connection + DNS tunneling detection.
 
-We already have most detection features. Phase 5 makes Bro Hunter report-ready and
+We already have most detection features. Phase 5 makes Vervet report-ready and
 analyst-workflow-complete so it looks like a mature commercial tool in demos.
 
 ## 5A: PDF Report Generation + Report History (Backend + Frontend)
@@ -122,7 +122,7 @@ Add the "all communications for a host" view that AC-Hunter highlights.
 - **CRITICAL:** `api/config/__init__.py` is the REAL config (it's a package). `api/config.py` is dead code.
 - **CRITICAL:** FastAPI `on_event("startup")` doesn't fire reliably. Use `lifespan` context manager.
 - **CRITICAL:** `detect_beacons` doesn't exist on BeaconAnalyzer. The method is `analyze_connections`.
-- Demo data: Railway needs `BROHUNTER_DEMO_MODE=true` env var.
+- Demo data: Railway needs `VERVET_DEMO_MODE=true` env var.
 - Existing services to import from: log_store, unified_threat_engine, beacon_analyzer, dns_analyzer, session_reconstructor, case_manager, report_generator
 - V3 is the shipped variant. All frontend work goes in web/src/variants/v3/
 - Use CSS classes from styles.css (v3-card, v3-table, v3-badge, v3-btn, etc.)

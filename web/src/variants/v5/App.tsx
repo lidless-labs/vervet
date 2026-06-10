@@ -37,8 +37,8 @@ const V5App: React.FC = () => {
       {/* Horizontal top nav */}
       <nav className="v5-nav" aria-label="Main navigation">
         <div className="v5-nav-inner">
-          <Link to="/dev/5" className="v5-nav-brand" aria-label="Bro Hunter home">
-            Bro Hunter
+          <Link to="/dev/5" className="v5-nav-brand" aria-label="Vervet home">
+            Vervet
           </Link>
 
           <div className="v5-nav-links">

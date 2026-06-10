@@ -11,14 +11,14 @@ from api.routers.export import _export_csv, _export_stix, _export_openioc
 
 SAMPLE_IOCS = [
     {
-        "indicator": "192.168.1.100",
+        "indicator": "192.0.2.100",
         "type": "ip",
         "severity": "high",
         "score": 85.0,
         "first_seen": "2026-01-01T00:00:00+00:00",
         "last_seen": "2026-01-01T01:00:00+00:00",
         "mitre_techniques": "T1071,T1048",
-        "source": "bro-hunter",
+        "source": "vervet",
         "context": "C2 beaconing detected",
     },
     {
@@ -29,7 +29,7 @@ SAMPLE_IOCS = [
         "first_seen": "2026-01-01T00:05:00+00:00",
         "last_seen": "2026-01-01T00:30:00+00:00",
         "mitre_techniques": "T1071.004",
-        "source": "bro-hunter",
+        "source": "vervet",
         "context": "DNS tunneling to evil.example.com",
     },
 ]
@@ -52,7 +52,7 @@ class TestCsvExport:
         reader = csv.DictReader(output)
         rows = list(reader)
         assert len(rows) == 2
-        assert rows[0]["indicator"] == "192.168.1.100"
+        assert rows[0]["indicator"] == "192.0.2.100"
         assert rows[1]["type"] == "domain"
 
 
@@ -94,7 +94,7 @@ class TestOpenIocExport:
     def test_openioc_has_indicators(self):
         response = _export_openioc(SAMPLE_IOCS)
         content = response.body.decode() if isinstance(response.body, bytes) else response.body
-        assert "192.168.1.100" in content
+        assert "192.0.2.100" in content
         assert "evil.example.com" in content
 
 

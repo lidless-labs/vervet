@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      # pycairo (via xhtml2pdf -> svglib) compiles from source and needs cairo headers
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libcairo2-dev
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest -q
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Type-check and build
+        run: cd web && npx vite build
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t vervet:ci .

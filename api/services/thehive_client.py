@@ -1,5 +1,5 @@
 """
-Minimal TheHive client for exporting Bro Hunter cases.
+Minimal TheHive client for exporting Vervet cases.
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class TheHiveClient:
             raise RuntimeError(f"TheHive request failed: {e}") from e
 
 
-def map_brohunter_case_to_thehive(case: dict[str, Any]) -> dict[str, Any]:
+def map_vervet_case_to_thehive(case: dict[str, Any]) -> dict[str, Any]:
     severity_map = {"low": 1, "medium": 2, "high": 3, "critical": 4}
     bh_sev = str(case.get("severity", "medium")).lower()
 
@@ -61,10 +61,10 @@ def map_brohunter_case_to_thehive(case: dict[str, Any]) -> dict[str, Any]:
         f"\nSource Case ID: {case.get('id')}",
     ]
 
-    tags = ["bro-hunter", f"severity:{bh_sev}"] + list(case.get("tags", []))
+    tags = ["vervet", f"severity:{bh_sev}"] + list(case.get("tags", []))
 
     return {
-        "title": case.get("title", "Bro Hunter Case"),
+        "title": case.get("title", "Vervet Case"),
         "description": "\n".join([p for p in description_parts if p]),
         "severity": severity_map.get(bh_sev, 2),
         "tags": tags,

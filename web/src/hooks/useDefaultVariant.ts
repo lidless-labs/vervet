@@ -5,7 +5,7 @@
  * Users can change or clear the default from any variant's settings.
  * 
  * Usage:
- *   const { defaultVariant, setDefaultVariant, clearDefault } = useDefaultVariant('bro-hunter')
+ *   const { defaultVariant, setDefaultVariant, clearDefault } = useDefaultVariant('vervet')
  */
 import { useState, useCallback } from 'react'
 

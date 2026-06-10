@@ -115,7 +115,7 @@ ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	version	cipher	curve	server_name	
 Place this file in `api/data/suricata/`:
 
 ```json
-{"timestamp":"2026-02-09T10:15:00.123456+0000","flow_id":1234567890,"event_type":"flow","src_ip":"192.168.1.50","dest_ip":"192.0.2.1","src_port":54321,"dest_port":443,"proto":"TCP","flow":{"pkts_toserver":24,"pkts_toclient":18,"bytes_toserver":2048,"bytes_toclient":4096,"start":"2026-02-09T10:15:00.123456+0000","end":"2026-02-09T10:15:45.654321+0000","age":45,"state":"established","reason":"timeout"}}
+{"timestamp":"2026-02-09T10:15:00.123456+0000","flow_id":1234567890,"event_type":"flow","src_ip":"192.0.2.50","dest_ip":"192.0.2.1","src_port":54321,"dest_port":443,"proto":"TCP","flow":{"pkts_toserver":24,"pkts_toclient":18,"bytes_toserver":2048,"bytes_toclient":4096,"start":"2026-02-09T10:15:00.123456+0000","end":"2026-02-09T10:15:45.654321+0000","age":45,"state":"established","reason":"timeout"}}
 ```
 
 ## Threat Scoring Configuration

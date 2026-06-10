@@ -38,8 +38,8 @@ def generate_test_data(num_connections=100000, num_beacons=5):
     # Generate beacons (regular intervals)
     connections_per_beacon = 50
     for beacon_id in range(num_beacons):
-        src_ip = f"192.168.1.{100 + beacon_id}"
-        dst_ip = f"10.0.0.{50 + beacon_id}"
+        src_ip = f"192.0.2.{100 + beacon_id}"
+        dst_ip = f"203.0.113.{50 + beacon_id}"
         dst_port = 443
         interval = 60.0  # 60 second intervals
 
@@ -51,8 +51,8 @@ def generate_test_data(num_connections=100000, num_beacons=5):
     # Generate normal traffic (random)
     num_normal = num_connections - (num_beacons * connections_per_beacon)
 
-    src_ips = [f"192.168.{i}.{j}" for i in range(1, 20) for j in range(1, 20)]
-    dst_ips = [f"10.{i}.{j}.{k}" for i in range(1, 10) for j in range(1, 10) for k in range(1, 10)]
+    src_ips = [f"198.18.{i}.{j}" for i in range(1, 20) for j in range(1, 20)]
+    dst_ips = [f"198.19.{i}.{j * 10 + k}" for i in range(1, 10) for j in range(1, 10) for k in range(1, 10)]
 
     for i in range(num_normal):
         src_ip = random.choice(src_ips)

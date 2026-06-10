@@ -1,5 +1,5 @@
 /**
- * React Query hooks for all Bro Hunter data types.
+ * React Query hooks for all Vervet data types.
  * Automatically falls back to mock data when backend is unavailable.
  */
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';

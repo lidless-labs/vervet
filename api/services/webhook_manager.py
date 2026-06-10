@@ -114,7 +114,7 @@ class WebhookManager:
                 "color": 0xFF0000 if payload.get("severity") == "critical" else 0xFF8800,
                 "fields": [
                     {"name": "Severity", "value": payload.get("severity", "unknown"), "inline": True},
-                    {"name": "Source", "value": "Bro Hunter", "inline": True},
+                    {"name": "Source", "value": "Vervet", "inline": True},
                 ],
                 "timestamp": payload.get("timestamp", ""),
             }]
@@ -127,7 +127,7 @@ class WebhookManager:
                 {"type": "section", "text": {"type": "mrkdwn", "text": payload.get("message", "No details")}},
                 {"type": "section", "fields": [
                     {"type": "mrkdwn", "text": f"*Severity:* {payload.get('severity', 'unknown')}"},
-                    {"type": "mrkdwn", "text": "*Source:* Bro Hunter"},
+                    {"type": "mrkdwn", "text": "*Source:* Vervet"},
                 ]},
             ]
         }
@@ -197,7 +197,7 @@ class WebhookManager:
             return None
         payload = {
             "event_type": "test_alert",
-            "message": "This is a test alert from Bro Hunter",
+            "message": "This is a test alert from Vervet",
             "severity": "low",
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }

@@ -8,7 +8,7 @@ from api.models.threat import ThreatLevel
 
 
 def create_test_connection(
-    src_ip: str = "192.168.1.100",
+    src_ip: str = "192.0.2.100",
     dst_ip: str = "8.8.8.8",
     dst_port: int = 443,
     service: str = "https",
@@ -18,6 +18,7 @@ def create_test_connection(
 ) -> Connection:
     """Create a test connection."""
     return Connection(
+        uid="test-conn",
         src_ip=src_ip,
         src_port=54321,
         dst_ip=dst_ip,
@@ -162,11 +163,13 @@ class TestLongConnectionAnalyzer:
         """Test detection of covert channels (low sustained transfer)."""
         analyzer = LongConnectionAnalyzer(min_score_threshold=0.0)
 
-        # Very low but continuous transfer over long time
+        # Very low but continuous transfer over long time. The analyzer rates
+        # by total throughput (sent + recv), so keep the combined rate under the
+        # 100 B/s covert-channel ceiling: 25 + 25 = 50 B/s.
         conn = create_test_connection(
             duration=3600.0,  # 1 hour
-            bytes_sent=50 * 3600,  # 50 bytes/sec
-            bytes_recv=50 * 3600,
+            bytes_sent=25 * 3600,  # 25 bytes/sec each direction -> 50 B/s total
+            bytes_recv=25 * 3600,
         )
 
         results = analyzer.analyze_connections([conn])
@@ -181,7 +184,7 @@ class TestLongConnectionAnalyzer:
         # External destination
         conn_external = create_test_connection(dst_ip="8.8.8.8")
         # Internal destination
-        conn_internal = create_test_connection(dst_ip="192.168.1.50")
+        conn_internal = create_test_connection(dst_ip="192.0.2.50")
 
         results_external = analyzer.analyze_connections([conn_external])
         results_internal = analyzer.analyze_connections([conn_internal])
@@ -195,9 +198,9 @@ class TestLongConnectionAnalyzer:
         analyzer = LongConnectionAnalyzer()
 
         # Test various private ranges
-        assert analyzer._is_private_ip("10.0.0.1")
-        assert analyzer._is_private_ip("172.16.0.1")
-        assert analyzer._is_private_ip("192.168.1.1")
+        assert analyzer._is_private_ip("203.0.113.1")
+        assert analyzer._is_private_ip("198.18.160.1")
+        assert analyzer._is_private_ip("192.0.2.1")
         assert analyzer._is_private_ip("127.0.0.1")
 
         # Public IPs
@@ -368,7 +371,7 @@ class TestLongConnectionAnalyzer:
 
         # Low-score connection (internal, standard port)
         conn_low = create_test_connection(
-            dst_ip="192.168.1.50",
+            dst_ip="192.0.2.50",
             dst_port=443,
             duration=600.0,
             bytes_sent=1024,

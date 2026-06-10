@@ -1,251 +1,126 @@
 <p align="center">
-  <img src="docs/assets/bro-hunter-banner.jpg" alt="Bro Hunter network threat hunting banner">
+  <img src="docs/assets/vervet-banner.jpg" alt="Vervet network threat hunting banner">
 </p>
 
-<h1 align="center">🎯 Solomon's Bro Hunter</h1>
+<h1 align="center">Vervet</h1>
 
 <p align="center">
-  <strong>Hunt threats in network traffic with explainable scoring and MITRE ATT&CK mapping.</strong>
+  <strong>Vervet reads your Zeek and Suricata logs and tells you which hosts are compromised and why.</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=0f172a" alt="React 18.2">
-  <img src="https://img.shields.io/badge/TypeScript-5.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript 5.3">
-  <img src="https://img.shields.io/badge/Python-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.9+">
-  <img src="https://img.shields.io/badge/FastAPI-0.109-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI 0.109">
-  <img src="https://img.shields.io/badge/Zeek-logs-0f766e?style=for-the-badge" alt="Zeek logs">
-  <img src="https://img.shields.io/badge/Suricata-EVE-b91c1c?style=for-the-badge" alt="Suricata EVE">
-  <img src="https://img.shields.io/badge/MITRE_ATT%26CK-mapped-f97316?style=for-the-badge" alt="MITRE ATT&CK mapped">
-  <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge" alt="MIT License">
-  <a href="https://solomonneas.dev/projects/bro-hunter"><img src="https://img.shields.io/badge/Portfolio-solomonneas.dev-22c55e?style=for-the-badge" alt="Portfolio"></a>
+  <a href="https://github.com/solomonneas/vervet/actions/workflows/ci.yml"><img src="https://github.com/solomonneas/vervet/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=0f172a" alt="React 18">
+  <img src="https://img.shields.io/badge/MITRE_ATT%26CK-mapped-f97316" alt="MITRE ATT&CK mapped">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0"></a>
+  <a href="https://solomonneas.dev/projects/vervet"><img src="https://img.shields.io/badge/Portfolio-solomonneas.dev-22c55e" alt="Portfolio"></a>
 </p>
 
-Bro Hunter is a threat hunting platform that processes Zeek and Suricata network logs to identify threats, score them with explainable AI, and correlate indicators across MITRE ATT&CK techniques. Built for network forensics teams who need to see the evidence.
+Point Vervet at a directory of Zeek and Suricata logs and it surfaces the threats hiding in them: C2 beacons phoning home on a fixed interval, DNS tunneling and DGA domains, data exfiltration, lateral movement, and long-lived connections that shouldn't exist. Every flagged host gets a transparent risk score with the **evidence chain that produced it** and the **MITRE ATT&CK techniques** it maps to, so an analyst sees not just *what* fired but *why*. It runs as a single container on your own hardware. No cloud, no telemetry, no live tap required, and it never touches your network, it only reads logs you already collect.
 
----
+Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and want the analyst layer that hunts the logs for them, the way RITA and AC-Hunter do for beaconing, but UI-first, MITRE-mapped, and speaking both sensors.
 
-## Features
+<!-- TODO: screenshot of the threat dashboard -->
 
-- **Zeek & Suricata Log Analysis** - Parse network logs and extract threat indicators
-- **Explainable Threat Scoring** - AI-powered scores with reasoning chain included
-- **MITRE ATT&CK Mapping** - Automatic technique and tactic correlation
-- **Beaconing Detection** - Identify periodic C2 communication patterns
-- **DNS Threat Analysis** - Detect DGA, tunneling, and fast-flux networks
-- **Network Forensics** - Drill into flow data, DNS queries, and SSL certificates
-- **5 Visual Themes** - Tactical, Analyst, Terminal, Command, Cyber variants
-- **Offline-First** - Works with archived logs, no live streaming required
+## Try it with zero logs of your own
 
----
-
-## Quick Start
+Demo mode loads a realistic sample environment (beaconing C2, DNS tunneling, a noisy Suricata sensor) so the dashboard shows scored, explained threats immediately:
 
 ```bash
-# Clone the repo
-git clone https://github.com/solomonneas/bro-hunter.git
-cd bro-hunter
+git clone https://github.com/solomonneas/vervet.git
+cd vervet
+docker compose up -d --build
+# open http://localhost:8000
+```
 
-# Install and run frontend
-npm install
-npm run dev
+The container serves the API and the web UI on the same port and seeds the demo data on startup. Stop it with `docker compose down`.
 
-# In another terminal, start the backend
-cd api
+## Run it on your own logs
+
+```bash
+# Point it at your Zeek/Suricata log directory instead of the demo data
+docker compose run --rm -e VERVET_DEMO_MODE=false \
+  -v /var/log/zeek:/logs:ro vervet
+```
+
+Then upload or ingest logs from the UI, or via the REST API:
+
+```bash
+# Zeek conn/dns/http/ssl logs and Suricata eve.json are all accepted
+curl -X POST http://localhost:8000/api/v1/ingest/directory \
+  -H "X-API-Key: $VERVET_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/logs"}'
+```
+
+### Without Docker (development)
+
+```bash
+# Backend (FastAPI) on :8000
 pip install -r requirements.txt
-python main.py
+VERVET_DEMO_MODE=true uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Frontend (Vite dev server) on :5174, in another terminal
+npm install && cd web && npm run dev
 ```
 
-Frontend runs on **http://localhost:5174**
-Backend API on **http://localhost:8000**
+`make dev` starts both at once. See the [Makefile](Makefile) for individual targets.
 
----
+## What it detects
 
-## Tech Stack
+| Detection | What it finds | Maps to |
+| --- | --- | --- |
+| **Beaconing / C2** | Periodic callbacks by interval regularity, jitter, and data-size consistency | T1071, T1571 |
+| **DNS tunneling** | High-entropy subdomains and oversized TXT/NULL records used as a covert channel | T1071.004, T1048 |
+| **DGA domains** | Algorithmically generated domains via n-gram and lexical analysis | T1568.002 |
+| **Fast-flux** | Domains rotating through many IPs to hide infrastructure | T1568 |
+| **Lateral movement** | Internal-to-internal connection patterns that suggest pivoting | T1021 |
+| **Long connections** | Unusually persistent flows by duration, protocol, and direction | T1071, T1572 |
+| **Suricata alerts** | Severity-weighted IDS alerts folded into the same per-host score | varies |
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | React 18 | Interactive dashboards |
-| **Language** | TypeScript 5 | Type safety |
-| **Styling** | Tailwind CSS 3 | Utility-first CSS |
-| **Charts** | Recharts | Threat visualization and timeline graphs |
-| **Data** | TanStack Query | Async data fetching and caching |
-| **Bundler** | Vite 7 | Dev server and build |
-| **Backend** | FastAPI | REST API and log processing |
-| **Compute** | Python 3.9+ | Threat scoring algorithms |
-| **Icons** | Lucide React | Consistent icon set |
+Each detection contributes to a **unified per-host risk score (0-100)** with a full reasoning chain. Scoring is deterministic and explainable, not a black box: you can read exactly which signals raised a host's score and by how much.
 
----
+## How it works
 
-## Threat Scoring
-
-Bro Hunter uses a multi-factor scoring system:
-
-1. **Indicator Confidence** - IOC reputation across sources
-2. **Behavior Match** - Pattern recognition (beaconing, tunneling, etc.)
-3. **Evidence Weight** - How much supporting data backs the score
-4. **MITRE Alignment** - Technique frequency and criticality
-
-Scores range from 0 (benign) to 100 (critical threat) with a clear reasoning chain explaining each component.
-
----
-
-## Project Structure
-
-```text
-bro-hunter/
-├── web/                      # React frontend
-│   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   ├── pages/            # Page views (Dashboard, Threats, Analysis)
-│   │   ├── store/            # Zustand state store
-│   │   ├── utils/            # Helpers (scoring, parsing, formatting)
-│   │   └── variants/         # 5 theme variants
-│   ├── package.json
-│   └── vite.config.ts
-├── api/                      # FastAPI backend
-│   ├── main.py               # Entry point
-│   ├── parsers/              # Log parsers (Zeek, Suricata)
-│   ├── scoring/              # Threat scoring module
-│   ├── mitre/                # ATT&CK correlation
-│   └── requirements.txt
-├── data/                     # Sample logs and fixtures
-└── README.md
+```
+Zeek logs (conn/dns/http/ssl/x509/notice)   Suricata eve.json
+                 \                                  /
+                  +--> unified parsers -------------+
+                                |
+                  detection engines (beacon, DNS threat,
+                  lateral movement, long-conn, Suricata)
+                                |
+                  unified threat engine -> per-host score
+                  + MITRE ATT&CK mapping + evidence chain
+                                |
+         web UI + REST API  <---+---> case management / IOC export
+                                       (TheHive / Wazuh / MISP)
 ```
 
----
+Logs are parsed into a common connection/event model, run through each detection engine, and aggregated by the unified threat engine into per-host scores with MITRE mappings and evidence chains. Findings can be promoted to cases, exported as IOCs, and pushed to TheHive, correlated against Wazuh, or enriched from MISP.
 
-## Logs Ingestion
+> **Note on persistence (current limitation):** the OSS edition keeps its analysis index **in memory**. It is built for log-batch hunting and triage sessions, not yet as a long-running system of record. Restarting clears loaded logs and analysis (cases, hunt notes, and trends are file-backed). A durable store is the top roadmap item, see below.
 
-Place Zeek or Suricata logs in the `data/` directory and import them via the dashboard:
+## Integrations
 
-**Zeek logs:** `conn.log`, `dns.log`, `ssl.log`, `http.log`
-**Suricata:** `eve.json` (JSON output format)
+Initial endpoints exist for exporting cases to **TheHive**, correlating IOCs against **Wazuh** alerts, and enriching IOCs from **MISP**. Configure via environment variables (`THEHIVE_URL`/`THEHIVE_API_KEY`, `WAZUH_URL`/`WAZUH_API_KEY`, `MISP_URL`/`MISP_API_KEY`) and drive from `/api/v1/integrations/*`.
 
-The backend parses and indexes them for fast querying.
+## Security model
 
----
+- **Read-only on the wire.** Vervet ingests logs you already collect. There is no code path that talks to a network device or captures live traffic.
+- **API-key auth.** Set `VERVET_API_KEY` to require a key on every request. Without it, the server runs in open dev mode and says so loudly at startup.
+- **Ingestion sandbox.** Set `VERVET_LOG_ROOT` to restrict directory ingestion to a single tree, so the API can't be coaxed into reading arbitrary paths.
+- **Upload rate limiting.** PCAP/upload endpoints are rate-limited by default (`VERVET_RATE_LIMIT_*`) to protect public deployments.
+- **Local data, no telemetry.** Everything stays in your data directory. No external calls except the integrations you configure.
 
-## Rate Limiting
+## Roadmap
 
-PCAP uploads are rate-limited by default to prevent abuse on public deployments:
-
-- **5 uploads per hour** per IP
-- **15 uploads per day** per IP
-
-### Configuration
-
-Control rate limiting via environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `BROHUNTER_RATE_LIMIT_ENABLED` | `true` | Set to `false` to disable rate limiting entirely |
-| `BROHUNTER_RATE_LIMIT_HOURLY` | `5` | Max uploads per hour per IP |
-| `BROHUNTER_RATE_LIMIT_DAILY` | `15` | Max uploads per day per IP |
-
-### Self-Hosted / Cloned Deployments
-
-If you're running Bro Hunter on your own infrastructure and don't need rate limiting:
-
-```bash
-# Disable rate limiting entirely
-export BROHUNTER_RATE_LIMIT_ENABLED=false
-
-# Or increase the limits
-export BROHUNTER_RATE_LIMIT_HOURLY=100
-export BROHUNTER_RATE_LIMIT_DAILY=500
-```
-
-In Docker / Railway, set these as environment variables in your deployment config.
-
----
-
-## Integrations (Phase 7)
-
-Bro Hunter now includes initial external integration endpoints for TheHive, Wazuh, and MISP.
-
-### Environment Variables
-
-Set these on the API service:
-
-```bash
-# TheHive
-THEHIVE_URL=https://thehive.example.com
-THEHIVE_API_KEY=your_thehive_api_key
-THEHIVE_AUTH_SCHEME="Bearer"
-
-# Wazuh
-WAZUH_URL=https://wazuh.example.com
-WAZUH_API_KEY=your_wazuh_api_key
-WAZUH_AUTH_SCHEME="Bearer"
-WAZUH_ALERTS_PATH=/alerts
-
-# MISP
-MISP_URL=https://misp.example.com
-MISP_API_KEY=your_misp_api_key
-MISP_SEARCH_PATH=/attributes/restSearch
-```
-
-### Endpoints
-
-- `GET /api/v1/integrations/status`
-- `POST /api/v1/integrations/thehive/cases/from-case/{case_id}`
-- `POST /api/v1/integrations/wazuh/correlate/case/{case_id}?limit_per_ioc=25`
-- `POST /api/v1/integrations/misp/enrich/case/{case_id}?limit_per_ioc=25`
-
-### Example cURL
-
-```bash
-# Check integration config status
-curl -s http://localhost:8000/api/v1/integrations/status
-
-# Export a case to TheHive
-curl -X POST "http://localhost:8000/api/v1/integrations/thehive/cases/from-case/<case_id>" \
-  -H "X-API-Key: $BROHUNTER_API_KEY"
-
-# Correlate case IOCs with Wazuh alerts
-curl -X POST "http://localhost:8000/api/v1/integrations/wazuh/correlate/case/<case_id>?limit_per_ioc=25" \
-  -H "X-API-Key: $BROHUNTER_API_KEY"
-
-# Enrich case IOCs from MISP
-curl -X POST "http://localhost:8000/api/v1/integrations/misp/enrich/case/<case_id>?limit_per_ioc=25" \
-  -H "X-API-Key: $BROHUNTER_API_KEY"
-```
-
-## Live Operations API (Phase 8)
-
-Real-time log ingestion and incremental event streaming for live dashboards.
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/live/status` | Get ingest statistics and health status |
-| POST | `/api/v1/live/ingest/zeek` | Ingest Zeek JSON lines (conn, dns) |
-| POST | `/api/v1/live/ingest/suricata` | Ingest Suricata EVE JSON lines |
-| GET | `/api/v1/live/events?since=<iso>&limit=500` | Get incremental events for auto-refresh |
-
-### Example cURL
-
-```bash
-# Check live operations status
-curl -s http://localhost:8000/api/v1/live/status
-
-# Ingest Zeek conn.log events
-curl -X POST "http://localhost:8000/api/v1/live/ingest/zeek?log_type=conn" \
-  -H "X-API-Key: $BROHUNTER_API_KEY" \
-  -H "Content-Type: text/plain" \
-  -d '{"ts":1700000000.0,"uid":"C1","id_orig_h":"198.51.100.10","id_orig_p":12345,"id_resp_h":"203.0.113.20","id_resp_p":80,"proto":"tcp","conn_state":"SF"}'
-
-# Ingest Suricata EVE events
-curl -X POST "http://localhost:8000/api/v1/live/ingest/suricata" \
-  -H "X-API-Key: $BROHUNTER_API_KEY" \
-  -H "Content-Type: text/plain" \
-  -d '{"timestamp":"2024-01-01T00:00:00.000Z","event_type":"alert","src_ip":"198.51.100.10","dest_ip":"203.0.113.20","src_port":12345,"dest_port":80,"proto":"TCP","alert":{"signature":"Test Alert","signature_id":123,"category":"test","severity":3,"action":"allowed"}}'
-
-# Get incremental events since a timestamp (for dashboard auto-refresh)
-curl -s "http://localhost:8000/api/v1/live/events?since=2024-01-01T00:00:00Z&limit=100" \
-  -H "X-API-Key: $BROHUNTER_API_KEY"
-```
+- **Durable persistence** (SQLite-backed index, audit trail) so investigations survive restarts, the prerequisite for team use.
+- **Live log tailing** for near-real-time dashboards instead of batch ingest.
+- **Multi-sensor** support and alert suppression / noise controls.
+- **MCP server** so agents can query hunts directly.
 
 ## License
 
-MIT - see [LICENSE](LICENSE) for details.
+Apache-2.0. See [LICENSE](LICENSE).

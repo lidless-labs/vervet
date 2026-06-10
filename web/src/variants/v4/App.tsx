@@ -55,9 +55,9 @@ const V4App: React.FC = () => {
     <div className="v4-root">
       {/* Angular Top Nav */}
       <nav className="v4-nav" aria-label="Main navigation">
-        <Link to="/dev/4" className="v4-nav-brand" aria-label="Bro Hunter home">
+        <Link to="/dev/4" className="v4-nav-brand" aria-label="Vervet home">
           <Zap size={20} aria-hidden="true" />
-          <span className="v4-nav-brand-text">Bro Hunter</span>
+          <span className="v4-nav-brand-text">Vervet</span>
         </Link>
 
         <div className="v4-nav-items">

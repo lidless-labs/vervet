@@ -13,7 +13,7 @@ def test_convert_tshark_json_maps_connection_and_dns():
                         "frame.time_epoch": "1739617200.123",
                         "frame.len": "128",
                     },
-                    "ip": {"ip.src": "10.1.1.5", "ip.dst": "8.8.8.8"},
+                    "ip": {"ip.src": "198.19.11.5", "ip.dst": "8.8.8.8"},
                     "udp": {"udp.srcport": "51515", "udp.dstport": "53"},
                     "dns": {
                         "dns.qry.name": "example.com",
@@ -29,7 +29,7 @@ def test_convert_tshark_json_maps_connection_and_dns():
     connections, dns_queries, alerts = convert_tshark_json(tshark_output)
 
     assert len(connections) == 1
-    assert connections[0].src_ip == "10.1.1.5"
+    assert connections[0].src_ip == "198.19.11.5"
     assert connections[0].dst_ip == "8.8.8.8"
     assert connections[0].service == "dns"
 
@@ -47,7 +47,7 @@ def test_convert_tshark_json_handles_missing_layers_gracefully():
             "_source": {
                 "layers": {
                     "frame": {"frame.time_epoch": "1739617200.2", "frame.len": "60"},
-                    "ip": {"ip.src": "192.168.1.10", "ip.dst": "1.1.1.1"},
+                    "ip": {"ip.src": "192.0.2.10", "ip.dst": "1.1.1.1"},
                     "tcp": {"tcp.srcport": "50123", "tcp.dstport": "443", "tcp.flags.str": "0x00000018"},
                 }
             }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate realistic fixture data for Hunter - Zeek and Suricata logs.
+Generate realistic fixture data for Vervet - Zeek and Suricata logs.
 Creates JSON log files with diverse, realistic network traffic patterns.
 """
 import json
@@ -12,8 +12,8 @@ BASE_TIME = datetime.now() - timedelta(days=7)
 
 # Realistic IP addresses for internal/external hosts
 INTERNAL_IPS = [
-    "192.168.1.10", "192.168.1.15", "192.168.1.20", "192.168.1.25",
-    "10.0.0.5", "10.0.0.10", "10.0.0.15", "172.16.1.100"
+    "192.0.2.10", "192.0.2.15", "192.0.2.20", "192.0.2.25",
+    "203.0.113.5", "203.0.113.10", "203.0.113.15", "198.18.161.100"
 ]
 
 EXTERNAL_IPS = [

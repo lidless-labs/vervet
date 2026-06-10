@@ -8,8 +8,8 @@ from api.services.session_reconstructor import SessionReconstructor
 
 @dataclass
 class MockConnection:
-    src_ip: str = "10.0.0.1"
-    dst_ip: str = "192.168.1.1"
+    src_ip: str = "203.0.113.1"
+    dst_ip: str = "192.0.2.1"
     src_port: int = 49000
     dst_port: int = 443
     proto: str = "tcp"
@@ -23,7 +23,7 @@ class MockConnection:
 
 @dataclass
 class MockDnsQuery:
-    src_ip: str = "10.0.0.1"
+    src_ip: str = "203.0.113.1"
     query: str = "example.com"
     query_type: str = "A"
     timestamp: float = 1700000000.0
@@ -65,8 +65,8 @@ class TestSessionGrouping:
     def test_different_ip_pairs(self):
         """Different IP pairs form separate sessions."""
         conns = [
-            MockConnection(src_ip="10.0.0.1", dst_ip="192.168.1.1", timestamp=1700000000.0),
-            MockConnection(src_ip="10.0.0.2", dst_ip="192.168.1.2", timestamp=1700000000.0),
+            MockConnection(src_ip="203.0.113.1", dst_ip="192.0.2.1", timestamp=1700000000.0),
+            MockConnection(src_ip="203.0.113.2", dst_ip="192.0.2.2", timestamp=1700000000.0),
         ]
         store = self._make_store(conns)
         reconstructor = SessionReconstructor(store, gap_seconds=300)
@@ -76,8 +76,8 @@ class TestSessionGrouping:
     def test_bidirectional_grouping(self):
         """A->B and B->A go into the same session."""
         conns = [
-            MockConnection(src_ip="10.0.0.1", dst_ip="192.168.1.1", timestamp=1700000000.0),
-            MockConnection(src_ip="192.168.1.1", dst_ip="10.0.0.1", timestamp=1700000060.0),
+            MockConnection(src_ip="203.0.113.1", dst_ip="192.0.2.1", timestamp=1700000000.0),
+            MockConnection(src_ip="192.0.2.1", dst_ip="203.0.113.1", timestamp=1700000060.0),
         ]
         store = self._make_store(conns)
         reconstructor = SessionReconstructor(store, gap_seconds=300)
@@ -100,7 +100,7 @@ class TestSessionGrouping:
     def test_dns_enrichment(self):
         """DNS queries are attached to matching sessions."""
         conns = [MockConnection(timestamp=1700000000.0)]
-        dns = [MockDnsQuery(src_ip="10.0.0.1", timestamp=1700000010.0)]
+        dns = [MockDnsQuery(src_ip="203.0.113.1", timestamp=1700000010.0)]
         store = self._make_store(conns, dns_queries=dns)
         reconstructor = SessionReconstructor(store, gap_seconds=300)
         sessions = reconstructor.reconstruct_all()

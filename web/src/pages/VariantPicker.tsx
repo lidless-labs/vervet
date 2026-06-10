@@ -76,7 +76,7 @@ export const VariantPicker: React.FC = () => {
       <header className="border-b border-gray-800">
         <div className="max-w-5xl mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold text-accent-cyan">
-            Solomon's Bro Hunter
+            Vervet
           </h1>
           <p className="text-gray-400 mt-2 max-w-2xl">
             Network threat hunting and analysis platform. Choose a frontend variant to explore

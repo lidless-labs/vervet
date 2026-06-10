@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Hunter - Network Threat Hunting Platform"
+	@echo "Vervet - Network Threat Hunting Platform"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make dev              - Start both backend and frontend in development mode"
@@ -24,7 +24,7 @@ help:
 
 # Development
 dev:
-	@echo "Starting Hunter in development mode..."
+	@echo "Starting Vervet in development mode..."
 	@echo "Backend will run on http://localhost:8000"
 	@echo "Frontend will run on http://localhost:5173"
 	@echo ""

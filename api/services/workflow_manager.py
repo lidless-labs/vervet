@@ -46,7 +46,7 @@ class WorkflowManager:
 
     def __init__(self):
         self._jobs: Dict[str, WorkflowJob] = {}
-        self._work_dir = tempfile.mkdtemp(prefix="brohunter_workflow_")
+        self._work_dir = tempfile.mkdtemp(prefix="vervet_workflow_")
 
     def create_job(self, filename: str, pcap_data: bytes) -> WorkflowJob:
         """Create a new workflow job from uploaded PCAP data."""

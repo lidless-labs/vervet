@@ -74,7 +74,7 @@ uvicorn main:app --reload
 curl http://localhost:8000/api/v1/analysis/threats | jq
 
 # Get specific host threat profile
-curl http://localhost:8000/api/v1/analysis/threats/192.168.1.100 | jq
+curl http://localhost:8000/api/v1/analysis/threats/192.0.2.100 | jq
 
 # Get all threat indicators
 curl http://localhost:8000/api/v1/analysis/indicators | jq
@@ -291,4 +291,4 @@ All components are:
 
 ---
 
-**Built for AC Hunter - Network Threat Hunting Platform**
+**Built for Vervet - Network Threat Hunting Platform**

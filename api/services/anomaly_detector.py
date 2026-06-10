@@ -1,4 +1,4 @@
-"""Statistical anomaly detection engine for Bro Hunter."""
+"""Statistical anomaly detection engine for Vervet."""
 from __future__ import annotations
 
 from collections import Counter, defaultdict

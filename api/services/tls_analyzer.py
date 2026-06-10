@@ -146,10 +146,10 @@ class TlsAnalyzer:
 
         def _rand_ip(internal=False):
             if internal:
-                return f"10.{random.randint(0,255)}.{random.randint(1,254)}.{random.randint(1,254)}"
+                return f"198.{random.choice([18, 19])}.{random.randint(0,255)}.{random.randint(1,254)}"
             return f"{random.randint(1,223)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}"
 
-        src_ip = "10.0.1.50"
+        src_ip = "198.19.1.50"
 
         for i in range(count):
             ts = (now - timedelta(minutes=random.randint(1, 1440))).isoformat()

@@ -181,24 +181,24 @@ class LateralMovementDetector:
         # Attacker doing mass scan
         for _ in range(25):
             connections.append({
-                "src_ip": "10.0.1.105",
-                "dst_ip": f"10.0.1.{random.randint(1,254)}",
+                "src_ip": "198.19.1.105",
+                "dst_ip": f"198.19.1.{random.randint(1,254)}",
                 "dst_port": random.choice([445, 3389, 135]),
                 "ts": (now - timedelta(minutes=random.randint(1, 30))).isoformat(),
             })
         # Moderate lateral movement
         for _ in range(8):
             connections.append({
-                "src_ip": "10.0.2.50",
-                "dst_ip": f"10.0.2.{random.choice([10,20,30,40,50])}",
+                "src_ip": "198.19.2.50",
+                "dst_ip": f"198.19.2.{random.choice([10,20,30,40,50])}",
                 "dst_port": random.choice([445, 22]),
                 "ts": (now - timedelta(minutes=random.randint(30, 120))).isoformat(),
             })
         # Normal admin
         for _ in range(3):
             connections.append({
-                "src_ip": "10.0.1.10",
-                "dst_ip": f"10.0.1.{random.choice([20,21])}",
+                "src_ip": "198.19.1.10",
+                "dst_ip": f"198.19.1.{random.choice([20,21])}",
                 "dst_port": 22,
                 "ts": (now - timedelta(minutes=random.randint(60, 480))).isoformat(),
             })

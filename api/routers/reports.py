@@ -40,7 +40,7 @@ async def report_pdf():
     _ensure_data_available()
     generator = ReportGenerator(log_store)
     pdf_bytes = generator.generate_pdf()
-    filename = f"bro-hunter-report-{datetime.utcnow().date().isoformat()}.pdf"
+    filename = f"vervet-report-{datetime.utcnow().date().isoformat()}.pdf"
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
     return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers=headers)
 

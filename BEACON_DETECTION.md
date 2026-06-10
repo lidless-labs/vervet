@@ -120,8 +120,8 @@ Response:
 {
   "beacons": [
     {
-      "src_ip": "192.168.1.100",
-      "dst_ip": "10.0.0.50",
+      "src_ip": "192.0.2.100",
+      "dst_ip": "203.0.113.50",
       "dst_port": 443,
       "connection_count": 150,
       "avg_interval_seconds": 60.2,
@@ -143,7 +143,7 @@ Response:
 
 ### Detailed Analysis
 ```bash
-GET /api/hunt/beacons/192.168.1.100/10.0.0.50
+GET /api/hunt/beacons/192.0.2.100/203.0.113.50
 ```
 
 Returns full interval histogram for visualization.

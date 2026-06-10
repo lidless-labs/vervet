@@ -41,7 +41,7 @@ class LiveCaptureService:
         self._sessions: Dict[str, CaptureSession] = {}
         self._processes: Dict[str, subprocess.Popen] = {}
         self._timers: Dict[str, threading.Timer] = {}
-        self._capture_dir = tempfile.mkdtemp(prefix="brohunter_capture_")
+        self._capture_dir = tempfile.mkdtemp(prefix="vervet_capture_")
 
     def get_interfaces(self) -> list:
         """List available network interfaces."""

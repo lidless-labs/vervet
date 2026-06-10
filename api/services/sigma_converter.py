@@ -1,4 +1,4 @@
-"""Lightweight Sigma YAML converter for Bro Hunter rules."""
+"""Lightweight Sigma YAML converter for Vervet rules."""
 from __future__ import annotations
 
 import base64

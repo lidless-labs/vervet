@@ -1,5 +1,5 @@
 """
-Ingest router for loading log files into Bro Hunter.
+Ingest router for loading log files into Vervet.
 Provides endpoints for loading directories of Zeek and Suricata logs.
 """
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File

@@ -16,7 +16,8 @@ def create_test_log_store() -> LogStore:
     # Beaconing pattern: regular connections to same destination
     for i in range(15):
         conn = Connection(
-            src_ip="192.168.1.100",
+            uid=f"beacon-{i}",
+            src_ip="192.0.2.100",
             src_port=54321 + i,
             dst_ip="8.8.8.8",
             dst_port=443,
@@ -28,11 +29,12 @@ def create_test_log_store() -> LogStore:
             timestamp=1704000000.0 + (i * 600),  # Every 10 minutes
             source="zeek",
         )
-        store.add_connection(conn)
+        store._add_connection(conn)
 
     # Long connection
     long_conn = Connection(
-        src_ip="192.168.1.101",
+        uid="long-conn",
+        src_ip="192.0.2.101",
         src_port=12345,
         dst_ip="1.2.3.4",
         dst_port=8080,
@@ -44,13 +46,15 @@ def create_test_log_store() -> LogStore:
         timestamp=1704000000.0,
         source="zeek",
     )
-    store.add_connection(long_conn)
+    store._add_connection(long_conn)
 
     # DNS queries for tunneling detection
     for i in range(20):
         query = DnsQuery(
-            src_ip="192.168.1.102",
+            src_ip="192.0.2.102",
+            src_port=50000 + i,
             dst_ip="8.8.8.8",
+            dst_port=53,
             query=f"aGVsbG93b3JsZHRlc3RkYXRhe{i:03d}.malicious.com",  # Base64-like subdomain
             qtype="A",
             rcode="NOERROR",
@@ -58,24 +62,24 @@ def create_test_log_store() -> LogStore:
             timestamp=1704000000.0 + i,
             source="zeek",
         )
-        store.add_dns_query(query)
+        store._add_dns_query(query)
 
-    # Suricata alerts
+    # Suricata alerts (normalized unified.Alert, as produced by ingestion)
     for i in range(5):
         alert = Alert(
             timestamp=1704000000.0 + i,
-            src_ip="10.0.0.50",
-            dst_ip="192.168.1.200",
+            src_ip="203.0.113.50",
+            dst_ip="192.0.2.200",
             src_port=12345,
             dst_port=22,
             proto="TCP",
-            alert_type="ids",
             signature="SSH Brute Force Attempt",
+            signature_id=2001219,
             severity=2,
             category="Attempted Recon",
-            source="suricata",
+            action="allowed",
         )
-        store.add_alert(alert)
+        store._add_alert(alert)
 
     return store
 
@@ -115,9 +119,9 @@ class TestUnifiedThreatEngine:
 
         profiles = engine.analyze_all()
 
-        # Host 192.168.1.100 should have beacons
-        if "192.168.1.100" in profiles:
-            profile = profiles["192.168.1.100"]
+        # Host 192.0.2.100 should have beacons
+        if "192.0.2.100" in profiles:
+            profile = profiles["192.0.2.100"]
             assert profile.beacon_count > 0
             assert len(profile.beacons) > 0
 
@@ -128,9 +132,9 @@ class TestUnifiedThreatEngine:
 
         profiles = engine.analyze_all()
 
-        # Host 192.168.1.102 should have DNS threats
-        if "192.168.1.102" in profiles:
-            profile = profiles["192.168.1.102"]
+        # Host 192.0.2.102 should have DNS threats
+        if "192.0.2.102" in profiles:
+            profile = profiles["192.0.2.102"]
             assert profile.dns_threat_count > 0
             assert len(profile.dns_threats) > 0
 
@@ -141,9 +145,9 @@ class TestUnifiedThreatEngine:
 
         profiles = engine.analyze_all()
 
-        # Host 10.0.0.50 should have alerts
-        if "10.0.0.50" in profiles:
-            profile = profiles["10.0.0.50"]
+        # Host 203.0.113.50 should have alerts
+        if "203.0.113.50" in profiles:
+            profile = profiles["203.0.113.50"]
             assert profile.alert_count > 0
             assert len(profile.alerts) > 0
 
@@ -154,9 +158,9 @@ class TestUnifiedThreatEngine:
 
         profiles = engine.analyze_all()
 
-        # Host 192.168.1.101 should have long connections
-        if "192.168.1.101" in profiles:
-            profile = profiles["192.168.1.101"]
+        # Host 192.0.2.101 should have long connections
+        if "192.0.2.101" in profiles:
+            profile = profiles["192.0.2.101"]
             assert profile.long_connection_count > 0
             assert len(profile.long_connections) > 0
 
@@ -341,10 +345,10 @@ class TestUnifiedThreatEngine:
         engine = UnifiedThreatEngine(store)
 
         # Get profile for host with beacons
-        profile = engine.get_host_profile("192.168.1.100")
+        profile = engine.get_host_profile("192.0.2.100")
 
         if profile:
-            assert profile.ip == "192.168.1.100"
+            assert profile.ip == "192.0.2.100"
             assert profile.beacon_count > 0
 
     def test_get_host_profile_nonexistent(self):
@@ -352,7 +356,7 @@ class TestUnifiedThreatEngine:
         store = create_test_log_store()
         engine = UnifiedThreatEngine(store)
 
-        profile = engine.get_host_profile("10.10.10.10")
+        profile = engine.get_host_profile("198.19.110.10")
         assert profile is None
 
     def test_get_top_threats(self):
@@ -419,9 +423,12 @@ class TestUnifiedThreatEngine:
         # Add beaconing connections
         for i in range(15):
             conn = Connection(
-                src_ip="192.168.1.100",
+                uid=f"beacon-{i}",
+                src_ip="192.0.2.100",
+                # External C2 IP (not an allowlisted DNS resolver like 8.8.8.8,
+                # which the beacon analyzer correctly filters regardless of port)
+                dst_ip="203.0.113.50",
                 src_port=54321 + i,
-                dst_ip="8.8.8.8",
                 dst_port=443,
                 proto="TCP",
                 service="https",
@@ -431,13 +438,15 @@ class TestUnifiedThreatEngine:
                 timestamp=1704000000.0 + (i * 600),
                 source="zeek",
             )
-            store.add_connection(conn)
+            store._add_connection(conn)
 
         # Add DNS tunneling from same host
         for i in range(20):
             query = DnsQuery(
-                src_ip="192.168.1.100",  # Same host as beacons
+                src_ip="192.0.2.100",  # Same host as beacons
+                src_port=50000 + i,
                 dst_ip="8.8.8.8",
+                dst_port=53,
                 query=f"aGVsbG93b3JsZHRlc3RkYXRhe{i:03d}.malicious.com",
                 qtype="A",
                 rcode="NOERROR",
@@ -445,14 +454,14 @@ class TestUnifiedThreatEngine:
                 timestamp=1704000000.0 + i,
                 source="zeek",
             )
-            store.add_dns_query(query)
+            store._add_dns_query(query)
 
         engine = UnifiedThreatEngine(store)
         profiles = engine.analyze_all()
 
         # Host should have both detections
-        if "192.168.1.100" in profiles:
-            profile = profiles["192.168.1.100"]
+        if "192.0.2.100" in profiles:
+            profile = profiles["192.0.2.100"]
             assert profile.beacon_count > 0
             assert profile.dns_threat_count > 0
             # Correlation should boost score
@@ -464,9 +473,10 @@ class TestUnifiedThreatEngine:
 
         # Add a single short connection (below thresholds)
         conn = Connection(
-            src_ip="192.168.1.100",
+            uid="short-conn",
+            src_ip="192.0.2.100",
             src_port=54321,
-            dst_ip="192.168.1.200",
+            dst_ip="192.0.2.200",
             dst_port=80,
             proto="TCP",
             service="http",
@@ -476,7 +486,7 @@ class TestUnifiedThreatEngine:
             timestamp=1704000000.0,
             source="zeek",
         )
-        store.add_connection(conn)
+        store._add_connection(conn)
 
         engine = UnifiedThreatEngine(store)
         profiles = engine.analyze_all()

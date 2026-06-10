@@ -38,12 +38,12 @@ const HuntResults: React.FC = () => {
     .slice(0, 5);
 
   const recommendations = [
-    'Immediately isolate hosts 10.0.1.15 and 10.0.2.5 — confirmed C2 beacon and DNS exfiltration activity.',
+    'Immediately isolate hosts 198.19.1.15 and 198.19.2.5 — confirmed C2 beacon and DNS exfiltration activity.',
     'Block outbound connections to 185.220.101.34 and 91.219.236.222 at the perimeter firewall.',
-    'Investigate DGA patterns from 172.16.0.10 — possible Emotet variant infection requiring forensic disk imaging.',
+    'Investigate DGA patterns from 198.18.160.10 — possible Emotet variant infection requiring forensic disk imaging.',
     'Review SSL certificates on port 443 connections to 198.98.56.78 — certificate common name mismatch detected.',
-    'Deploy additional monitoring for DNS TXT record queries originating from the 10.0.2.0/24 subnet.',
-    'Escalate Tor exit node communications from 10.0.3.8 to the incident response team for containment.',
+    'Deploy additional monitoring for DNS TXT record queries originating from the 198.19.2.0/24 subnet.',
+    'Escalate Tor exit node communications from 198.19.3.8 to the incident response team for containment.',
     'Update threat intelligence feeds to include the newly discovered C2 domains and associated infrastructure.',
     'Schedule full forensic analysis of all hosts with beacon scores at or above 90.',
   ];
@@ -459,7 +459,7 @@ const HuntResults: React.FC = () => {
               marginBottom: 4,
             }}
           >
-            Bro Hunter — Minimal Analyst
+            Vervet — Minimal Analyst
           </div>
           <div style={{ fontSize: 12, color: '#A8A29E' }}>
             Automated Threat Hunt Intelligence Brief ·{' '}

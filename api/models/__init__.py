@@ -1,5 +1,5 @@
 """
-Data models for Hunter API.
+Data models for Vervet API.
 Provides Pydantic models for log parsing, validation, and threat analysis.
 """
 from api.models.zeek import *

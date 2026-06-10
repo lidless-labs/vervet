@@ -1,5 +1,5 @@
 """
-Live Operations service for Bro Hunter.
+Live Operations service for Vervet.
 Tracks real-time ingest state including timestamps, counters, and source statistics.
 """
 import logging

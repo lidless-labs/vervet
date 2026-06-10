@@ -57,8 +57,8 @@ class ThreatIntelService:
     """Aggregates threat intelligence from multiple feeds."""
 
     def __init__(self):
-        self.otx_key = os.environ.get("BROHUNTER_OTX_KEY", "")
-        self.abuseipdb_key = os.environ.get("BROHUNTER_ABUSEIPDB_KEY", "")
+        self.otx_key = os.environ.get("VERVET_OTX_KEY", "")
+        self.abuseipdb_key = os.environ.get("VERVET_ABUSEIPDB_KEY", "")
         self._cache: Dict[str, tuple] = {}  # key -> (result, timestamp)
         self._local_blocklist: Set[str] = set()
         self._load_local_blocklist()

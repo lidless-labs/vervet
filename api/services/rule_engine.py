@@ -1,4 +1,4 @@
-"""Custom detection rule engine for Bro Hunter."""
+"""Custom detection rule engine for Vervet."""
 from __future__ import annotations
 
 import ipaddress

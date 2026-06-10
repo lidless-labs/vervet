@@ -53,7 +53,7 @@ class TestLiveOpsService:
             "timestamp": datetime.now(timezone.utc),
             "event_type": "conn",
             "source": "zeek",
-            "data": {"src_ip": "10.0.0.1"},
+            "data": {"src_ip": "203.0.113.1"},
         }
         
         self.service.add_recent_event(event)
@@ -149,7 +149,8 @@ class TestLiveOpsEndpoints:
         # For tests, we'll just check the endpoint structure
         response = client.post(
             "/api/v1/live/ingest/zeek",
-            content='{"ts":1700000000.0,"uid":"C1","id_orig_h":"10.0.0.1","id_orig_p":12345,"id_resp_h":"192.168.1.1","id_resp_p":80,"proto":"tcp"}',
+            content='{"ts":1700000000.0,"uid":"C1","id_orig_h":"203.0.113.1","id_orig_p":12345,"id_resp_h":"192.0.2.1","id_resp_p":80,"proto":"tcp"}',
+            headers={"Content-Type": "text/plain"},
         )
         # In dev mode (no API key configured), this should succeed
         # In prod mode, would return 401
@@ -157,13 +158,14 @@ class TestLiveOpsEndpoints:
     
     def test_ingest_zeek_with_valid_payload(self, client):
         """Test Zeek ingest with valid payload."""
-        payload = '{"ts":1700000000.0,"uid":"C1","id_orig_h":"10.0.0.1","id_orig_p":12345,"id_resp_h":"192.168.1.1","id_resp_p":80,"proto":"tcp","conn_state":"SF","orig_bytes":100,"resp_bytes":200}'
+        payload = '{"ts":1700000000.0,"uid":"C1","id_orig_h":"203.0.113.1","id_orig_p":12345,"id_resp_h":"192.0.2.1","id_resp_p":80,"proto":"tcp","conn_state":"SF","orig_bytes":100,"resp_bytes":200}'
         
         response = client.post(
             "/api/v1/live/ingest/zeek?log_type=conn",
             content=payload,
+            headers={"Content-Type": "text/plain"},
         )
-        
+
         # Should succeed or require auth
         assert response.status_code in [200, 401]
         
@@ -174,34 +176,40 @@ class TestLiveOpsEndpoints:
     
     def test_ingest_suricata_with_valid_payload(self, client):
         """Test Suricata ingest with valid payload."""
-        payload = '{"timestamp":"2024-01-01T00:00:00.000Z","event_type":"alert","src_ip":"10.0.0.1","dest_ip":"192.168.1.1","src_port":12345,"dest_port":80,"proto":"TCP","alert":{"signature":"Test","signature_id":123,"category":"test","severity":3,"action":"allowed"}}'
+        payload = '{"timestamp":"2024-01-01T00:00:00.000Z","event_type":"alert","src_ip":"203.0.113.1","dest_ip":"192.0.2.1","src_port":12345,"dest_port":80,"proto":"TCP","alert":{"signature":"Test","signature_id":123,"category":"test","severity":3,"action":"allowed"}}'
         
         response = client.post(
             "/api/v1/live/ingest/suricata",
             content=payload,
+            headers={"Content-Type": "text/plain"},
         )
-        
+
         assert response.status_code in [200, 401]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert data["success"] is True
-    
+
     def test_ingest_zeek_empty_payload_fails(self, client):
-        """Test that empty payload returns 400."""
+        """Test that empty payload is rejected."""
         response = client.post(
             "/api/v1/live/ingest/zeek",
             content="",
+            headers={"Content-Type": "text/plain"},
         )
-        assert response.status_code in [400, 401]
-    
+        # A completely empty body fails the required-Body validation (422)
+        # before the handler runs; a whitespace body would hit the handler's
+        # explicit 400. Either way it is rejected (and 401 in prod auth mode).
+        assert response.status_code in [400, 401, 422]
+
     def test_ingest_suricata_empty_payload_fails(self, client):
-        """Test that empty payload returns 400."""
+        """Test that empty payload is rejected."""
         response = client.post(
             "/api/v1/live/ingest/suricata",
             content="",
+            headers={"Content-Type": "text/plain"},
         )
-        assert response.status_code in [400, 401]
+        assert response.status_code in [400, 401, 422]
     
     def test_get_events_returns_valid_response(self, client):
         """Test that GET /api/v1/live/events returns valid response."""

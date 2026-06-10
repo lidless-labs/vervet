@@ -1,4 +1,4 @@
-"""Convert tshark JSON packet output into unified Bro Hunter models."""
+"""Convert tshark JSON packet output into unified Vervet models."""
 
 from __future__ import annotations
 
