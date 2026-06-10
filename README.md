@@ -22,6 +22,11 @@ Point Vervet at a directory of Zeek and Suricata logs and it surfaces the threat
 Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and want the analyst layer that hunts the logs for them, the way RITA and AC-Hunter do for beaconing, but UI-first, MITRE-mapped, and speaking both sensors.
 
 <p align="center">
+  <strong>▶ Try the live demo: <a href="https://demo.vervet.dev">demo.vervet.dev</a></strong><br>
+  <sub>No install. Real (sanitized) traffic with a C2 beacon and DNS tunnel already detected.</sub>
+</p>
+
+<p align="center">
   <img src="docs/assets/screenshots/beacons.png" alt="Vervet beacon analysis: scatter plot of score vs interval with per-beacon detail">
 </p>
 
