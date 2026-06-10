@@ -39,9 +39,9 @@ const HuntResults: React.FC = () => {
 
   const recommendations = [
     'Immediately isolate hosts 198.19.1.15 and 198.19.2.5 — confirmed C2 beacon and DNS exfiltration activity.',
-    'Block outbound connections to 185.220.101.34 and 91.219.236.222 at the perimeter firewall.',
+    'Block outbound connections to 203.0.113.105 and 203.0.113.118 at the perimeter firewall.',
     'Investigate DGA patterns from 198.18.160.10 — possible Emotet variant infection requiring forensic disk imaging.',
-    'Review SSL certificates on port 443 connections to 198.98.56.78 — certificate common name mismatch detected.',
+    'Review SSL certificates on port 443 connections to 203.0.113.109 — certificate common name mismatch detected.',
     'Deploy additional monitoring for DNS TXT record queries originating from the 198.19.2.0/24 subnet.',
     'Escalate Tor exit node communications from 198.19.3.8 to the incident response team for containment.',
     'Update threat intelligence feeds to include the newly discovered C2 domains and associated infrastructure.',

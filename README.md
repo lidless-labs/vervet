@@ -21,7 +21,16 @@ Point Vervet at a directory of Zeek and Suricata logs and it surfaces the threat
 
 Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and want the analyst layer that hunts the logs for them, the way RITA and AC-Hunter do for beaconing, but UI-first, MITRE-mapped, and speaking both sensors.
 
-<!-- TODO: screenshot of the threat dashboard -->
+<p align="center">
+  <img src="docs/assets/screenshots/beacons.png" alt="Vervet beacon analysis: scatter plot of score vs interval with per-beacon detail">
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/threats.png" width="49%" alt="Per-host threat scoring mapped to MITRE ATT&CK by tactic">
+  <img src="docs/assets/screenshots/dashboard.png" width="49%" alt="SOC dashboard overview">
+</p>
+
+<p align="center"><sub>Demo data: real Zeek logs (sanitized) with a synthetic C2 beacon and DNS-tunnel scenario layered in. Every address is an RFC 5737 / RFC 2544 documentation range.</sub></p>
 
 ## Try it with zero logs of your own
 

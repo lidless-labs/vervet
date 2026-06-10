@@ -55,11 +55,11 @@ const INTERNAL_IPS = [
 // External / Threat IPs (realistic-looking public IPs)
 // ============================================================================
 const EXTERNAL_THREAT_IPS = [
-  '185.220.101.34', '91.219.236.222', '45.155.205.108', '23.129.64.210',
-  '103.75.201.4', '198.98.56.78', '162.247.74.27', '209.141.47.65',
-  '185.56.80.65', '37.120.198.219', '193.239.147.51', '94.232.46.202',
-  '195.176.3.24', '176.10.104.240', '51.15.43.205', '80.67.172.162',
-  '185.100.87.174', '199.195.250.77', '104.244.76.13', '46.166.139.111',
+  '203.0.113.105', '203.0.113.118', '203.0.113.114', '203.0.113.112',
+  '203.0.113.100', '203.0.113.109', '203.0.113.102', '203.0.113.111',
+  '203.0.113.106', '203.0.113.113', '203.0.113.107', '203.0.113.119',
+  '203.0.113.108', '203.0.113.103', '203.0.113.116', '203.0.113.117',
+  '203.0.113.104', '203.0.113.110', '203.0.113.101', '203.0.113.115',
 ];
 
 // ============================================================================
@@ -114,14 +114,14 @@ function generateAlerts(): ThreatScore[] {
 
   // --- Critical alerts (8) ---
   const criticals = [
-    { ip: '198.19.1.15', ext: '185.220.101.34', domain: 'cmd.c2.beacon.example.net', score: 97, reasons: ['Regular 60s beacon interval', 'Known C2 infrastructure IP', 'Encrypted payload with fixed size'], techniques: ['T1071.001', 'T1573.001'] },
-    { ip: '198.19.2.5', ext: '91.219.236.222', domain: 'data.exfil.tunnel.example.com', score: 95, reasons: ['High-entropy DNS subdomain queries', 'Estimated 2.4MB exfiltrated via DNS', 'TXT record abuse'], techniques: ['T1071.004', 'T1048.003'] },
-    { ip: '192.0.2.10', ext: '45.155.205.108', domain: 'stage2.payload.example.org', score: 93, reasons: ['Binary download over HTTP', 'Known malware staging server', 'PowerShell execution after download'], techniques: ['T1105', 'T1059.001'] },
-    { ip: '198.19.3.8', ext: '23.129.64.210', domain: 'proxy.tor2web.example.cc', score: 91, reasons: ['Tor exit node communication', 'Multi-hop proxy chain detected', 'Data exfiltration over encrypted channel'], techniques: ['T1090.003', 'T1041'] },
-    { ip: '198.18.160.10', ext: '103.75.201.4', domain: 'xjkf8823mxvp.ru', score: 90, reasons: ['DGA domain pattern detected', 'High consonant-to-vowel ratio', 'Multiple NXDOMAIN followed by successful resolution'], techniques: ['T1568.002'] },
-    { ip: '198.19.1.47', ext: '198.98.56.78', domain: 'cdn-update.xyz', score: 89, reasons: ['Beacon interval 120s ± 3s jitter', 'Consistent 512-byte payloads', 'SSL certificate mismatch'], techniques: ['T1071.001', 'T1573.002'] },
-    { ip: '198.18.10.5', ext: '162.247.74.27', domain: 'crypto-wallet-update.cc', score: 88, reasons: ['Credential harvesting page detected', 'SSL cert CN mismatch', 'Known phishing infrastructure'], techniques: ['T1071.001'] },
-    { ip: '198.19.2.19', ext: '209.141.47.65', domain: 'free-vpn-download.xyz', score: 87, reasons: ['Malware dropper URL pattern', 'Obfuscated JavaScript payload', 'Post-exploitation framework beacon'], techniques: ['T1105', 'T1219'] },
+    { ip: '198.19.1.15', ext: '203.0.113.105', domain: 'cmd.c2.beacon.example.net', score: 97, reasons: ['Regular 60s beacon interval', 'Known C2 infrastructure IP', 'Encrypted payload with fixed size'], techniques: ['T1071.001', 'T1573.001'] },
+    { ip: '198.19.2.5', ext: '203.0.113.118', domain: 'data.exfil.tunnel.example.com', score: 95, reasons: ['High-entropy DNS subdomain queries', 'Estimated 2.4MB exfiltrated via DNS', 'TXT record abuse'], techniques: ['T1071.004', 'T1048.003'] },
+    { ip: '192.0.2.10', ext: '203.0.113.114', domain: 'stage2.payload.example.org', score: 93, reasons: ['Binary download over HTTP', 'Known malware staging server', 'PowerShell execution after download'], techniques: ['T1105', 'T1059.001'] },
+    { ip: '198.19.3.8', ext: '203.0.113.112', domain: 'proxy.tor2web.example.cc', score: 91, reasons: ['Tor exit node communication', 'Multi-hop proxy chain detected', 'Data exfiltration over encrypted channel'], techniques: ['T1090.003', 'T1041'] },
+    { ip: '198.18.160.10', ext: '203.0.113.100', domain: 'xjkf8823mxvp.ru', score: 90, reasons: ['DGA domain pattern detected', 'High consonant-to-vowel ratio', 'Multiple NXDOMAIN followed by successful resolution'], techniques: ['T1568.002'] },
+    { ip: '198.19.1.47', ext: '203.0.113.109', domain: 'cdn-update.xyz', score: 89, reasons: ['Beacon interval 120s ± 3s jitter', 'Consistent 512-byte payloads', 'SSL certificate mismatch'], techniques: ['T1071.001', 'T1573.002'] },
+    { ip: '198.18.10.5', ext: '203.0.113.102', domain: 'crypto-wallet-update.cc', score: 88, reasons: ['Credential harvesting page detected', 'SSL cert CN mismatch', 'Known phishing infrastructure'], techniques: ['T1071.001'] },
+    { ip: '198.19.2.19', ext: '203.0.113.111', domain: 'free-vpn-download.xyz', score: 87, reasons: ['Malware dropper URL pattern', 'Obfuscated JavaScript payload', 'Post-exploitation framework beacon'], techniques: ['T1105', 'T1219'] },
   ];
 
   criticals.forEach((c, i) => {
@@ -252,31 +252,31 @@ export const mockAlerts: ThreatScore[] = generateAlerts();
 function generateBeacons(): BeaconResult[] {
   const beacons: BeaconResult[] = [];
   const beaconConfigs = [
-    { src: '198.19.1.15', dst: '185.220.101.34', port: 443, avgInt: 60, jitter: 2.1, score: 97 },
-    { src: '198.19.1.47', dst: '198.98.56.78', port: 443, avgInt: 120, jitter: 3.5, score: 89 },
-    { src: '198.19.2.34', dst: '91.219.236.222', port: 8443, avgInt: 300, jitter: 5.2, score: 82 },
-    { src: '192.0.2.25', dst: '45.155.205.108', port: 80, avgInt: 1800, jitter: 8.0, score: 74 },
-    { src: '198.19.3.41', dst: '23.129.64.210', port: 443, avgInt: 90, jitter: 1.8, score: 95 },
-    { src: '198.18.160.25', dst: '103.75.201.4', port: 8080, avgInt: 600, jitter: 4.5, score: 78 },
-    { src: '198.19.1.88', dst: '162.247.74.27', port: 443, avgInt: 45, jitter: 6.2, score: 71 },
-    { src: '198.18.10.22', dst: '209.141.47.65', port: 4443, avgInt: 30, jitter: 1.2, score: 96 },
-    { src: '198.19.2.71', dst: '185.56.80.65', port: 443, avgInt: 180, jitter: 3.8, score: 85 },
-    { src: '198.19.3.66', dst: '37.120.198.219', port: 80, avgInt: 3600, jitter: 12.0, score: 62 },
-    { src: '192.0.2.50', dst: '193.239.147.51', port: 443, avgInt: 240, jitter: 2.5, score: 88 },
-    { src: '198.19.1.112', dst: '94.232.46.202', port: 8443, avgInt: 150, jitter: 4.0, score: 80 },
-    { src: '198.18.161.5', dst: '195.176.3.24', port: 443, avgInt: 60, jitter: 7.5, score: 68 },
-    { src: '198.19.2.99', dst: '176.10.104.240', port: 80, avgInt: 900, jitter: 6.0, score: 72 },
-    { src: '198.18.10.44', dst: '51.15.43.205', port: 443, avgInt: 75, jitter: 2.0, score: 92 },
-    { src: '198.19.3.103', dst: '80.67.172.162', port: 8080, avgInt: 200, jitter: 3.2, score: 83 },
-    { src: '198.19.1.22', dst: '185.100.87.174', port: 443, avgInt: 120, jitter: 1.5, score: 94 },
-    { src: '192.0.2.101', dst: '199.195.250.77', port: 4443, avgInt: 600, jitter: 9.0, score: 65 },
-    { src: '198.18.161.30', dst: '104.244.76.13', port: 443, avgInt: 30, jitter: 1.0, score: 98 },
-    { src: '198.19.2.5', dst: '46.166.139.111', port: 80, avgInt: 1200, jitter: 7.8, score: 67 },
-    { src: '198.19.3.200', dst: '185.220.101.34', port: 443, avgInt: 90, jitter: 2.8, score: 86 },
-    { src: '198.18.10.80', dst: '91.219.236.222', port: 8443, avgInt: 45, jitter: 3.0, score: 90 },
-    { src: '198.19.1.15', dst: '45.155.205.108', port: 80, avgInt: 360, jitter: 5.5, score: 76 },
-    { src: '198.18.162.15', dst: '23.129.64.210', port: 443, avgInt: 60, jitter: 1.6, score: 93 },
-    { src: '192.0.2.150', dst: '103.75.201.4', port: 8080, avgInt: 180, jitter: 4.2, score: 79 },
+    { src: '198.19.1.15', dst: '203.0.113.105', port: 443, avgInt: 60, jitter: 2.1, score: 97 },
+    { src: '198.19.1.47', dst: '203.0.113.109', port: 443, avgInt: 120, jitter: 3.5, score: 89 },
+    { src: '198.19.2.34', dst: '203.0.113.118', port: 8443, avgInt: 300, jitter: 5.2, score: 82 },
+    { src: '192.0.2.25', dst: '203.0.113.114', port: 80, avgInt: 1800, jitter: 8.0, score: 74 },
+    { src: '198.19.3.41', dst: '203.0.113.112', port: 443, avgInt: 90, jitter: 1.8, score: 95 },
+    { src: '198.18.160.25', dst: '203.0.113.100', port: 8080, avgInt: 600, jitter: 4.5, score: 78 },
+    { src: '198.19.1.88', dst: '203.0.113.102', port: 443, avgInt: 45, jitter: 6.2, score: 71 },
+    { src: '198.18.10.22', dst: '203.0.113.111', port: 4443, avgInt: 30, jitter: 1.2, score: 96 },
+    { src: '198.19.2.71', dst: '203.0.113.106', port: 443, avgInt: 180, jitter: 3.8, score: 85 },
+    { src: '198.19.3.66', dst: '203.0.113.113', port: 80, avgInt: 3600, jitter: 12.0, score: 62 },
+    { src: '192.0.2.50', dst: '203.0.113.107', port: 443, avgInt: 240, jitter: 2.5, score: 88 },
+    { src: '198.19.1.112', dst: '203.0.113.119', port: 8443, avgInt: 150, jitter: 4.0, score: 80 },
+    { src: '198.18.161.5', dst: '203.0.113.108', port: 443, avgInt: 60, jitter: 7.5, score: 68 },
+    { src: '198.19.2.99', dst: '203.0.113.103', port: 80, avgInt: 900, jitter: 6.0, score: 72 },
+    { src: '198.18.10.44', dst: '203.0.113.116', port: 443, avgInt: 75, jitter: 2.0, score: 92 },
+    { src: '198.19.3.103', dst: '203.0.113.117', port: 8080, avgInt: 200, jitter: 3.2, score: 83 },
+    { src: '198.19.1.22', dst: '203.0.113.104', port: 443, avgInt: 120, jitter: 1.5, score: 94 },
+    { src: '192.0.2.101', dst: '203.0.113.110', port: 4443, avgInt: 600, jitter: 9.0, score: 65 },
+    { src: '198.18.161.30', dst: '203.0.113.101', port: 443, avgInt: 30, jitter: 1.0, score: 98 },
+    { src: '198.19.2.5', dst: '203.0.113.115', port: 80, avgInt: 1200, jitter: 7.8, score: 67 },
+    { src: '198.19.3.200', dst: '203.0.113.105', port: 443, avgInt: 90, jitter: 2.8, score: 86 },
+    { src: '198.18.10.80', dst: '203.0.113.118', port: 8443, avgInt: 45, jitter: 3.0, score: 90 },
+    { src: '198.19.1.15', dst: '203.0.113.114', port: 80, avgInt: 360, jitter: 5.5, score: 76 },
+    { src: '198.18.162.15', dst: '203.0.113.112', port: 443, avgInt: 60, jitter: 1.6, score: 93 },
+    { src: '192.0.2.150', dst: '203.0.113.100', port: 8080, avgInt: 180, jitter: 4.2, score: 79 },
   ];
 
   beaconConfigs.forEach((b, i) => {
@@ -521,7 +521,7 @@ export const mockDashboardStats: DashboardStats = {
 export const mockIndicators: ThreatIndicator[] = [
   {
     indicator_type: 'ip_address' as IndicatorType,
-    value: '185.220.101.34',
+    value: '203.0.113.105',
     description: 'Known Tor exit node and C2 relay infrastructure',
     severity: 'critical' as ThreatLevel,
     source: 'Threat Intel Feed',
@@ -547,7 +547,7 @@ export const mockIndicators: ThreatIndicator[] = [
   },
   {
     indicator_type: 'ip_address' as IndicatorType,
-    value: '91.219.236.222',
+    value: '203.0.113.118',
     description: 'DNS tunneling endpoint for data exfiltration',
     severity: 'critical' as ThreatLevel,
     source: 'Beacon Analysis',

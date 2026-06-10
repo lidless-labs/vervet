@@ -6,7 +6,7 @@ from api.services.case_manager import CaseManager
 
 def _seed_case(manager: CaseManager) -> str:
     case = manager.create_case({"title": "Malware Investigation", "description": "Bundle export test"})
-    manager.add_ioc(case["id"], {"type": "ip", "value": "185.220.101.34", "source": "alert", "verdict": "malicious"})
+    manager.add_ioc(case["id"], {"type": "ip", "value": "203.0.113.34", "source": "alert", "verdict": "malicious"})
     manager.add_finding(case["id"], {"type": "alert", "summary": "Beaconing detected", "data": {"mitre_techniques": ["T1071.001"]}})
     return case["id"]
 

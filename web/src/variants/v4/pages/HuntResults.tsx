@@ -32,7 +32,7 @@ function generateHunts(): HuntResult[] {
       summary: 'Identified 8 high-confidence C2 beacon patterns across 6 internal hosts. Primary beacon targets include known Tor exit nodes and bulletproof hosting infrastructure.',
       recommendations: [
         'Immediately isolate 198.19.1.15 and 198.18.10.22',
-        'Block outbound traffic to 185.220.101.34, 198.98.56.78, 162.247.74.27',
+        'Block outbound traffic to 203.0.113.105, 203.0.113.109, 203.0.113.102',
         'Deploy SSL inspection on port 443/8443 for affected subnets',
         'Conduct memory forensics on identified hosts',
         'Review DNS logs for DGA patterns correlated with beacon sources',
