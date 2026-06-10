@@ -26,7 +26,7 @@ help:
 dev:
 	@echo "Starting Vervet in development mode..."
 	@echo "Backend will run on http://localhost:8000"
-	@echo "Frontend will run on http://localhost:5173"
+	@echo "Frontend will run on http://localhost:5174"
 	@echo ""
 	@trap 'kill 0' EXIT; \
 	make dev-backend & \
@@ -39,7 +39,7 @@ dev-backend:
 
 dev-frontend:
 	@echo "Starting frontend dev server..."
-	cd web && npm run dev
+	npm run dev
 
 # Build
 build: build-backend build-frontend
@@ -51,7 +51,7 @@ build-backend:
 
 build-frontend:
 	@echo "Building frontend production bundle..."
-	cd web && npm run build
+	npm run build
 	@echo "✓ Frontend built to web/dist/"
 
 # Clean
@@ -95,7 +95,7 @@ install-backend:
 
 install-frontend:
 	@echo "Installing Node.js dependencies..."
-	cd web && npm install
+	npm install
 	@echo "✓ Frontend dependencies installed"
 
 # Linting
@@ -109,4 +109,4 @@ lint-backend:
 
 lint-frontend:
 	@echo "Linting frontend code..."
-	cd web && npm run lint
+	npm run lint

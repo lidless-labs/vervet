@@ -3,7 +3,6 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Shield } from 'lucide-react';
-import { format } from 'date-fns';
 import { ScoreGauge } from '../../../components/charts';
 import { ThreatDetailPanel, FilterBar, defaultFilterState } from '../../../components/data';
 import type { ThreatScore, FilterState, ChartTheme } from '../../../types';
@@ -34,13 +33,6 @@ const v1Theme: ChartTheme = {
   },
   spacing: { chartPadding: 16, legendGap: 10, tooltipPadding: 8 },
 };
-
-function scoreClass(score: number): string {
-  if (score >= 85) return 'critical';
-  if (score >= 65) return 'high';
-  if (score >= 40) return 'medium';
-  return 'low';
-}
 
 const PAGE_SIZE = 12;
 

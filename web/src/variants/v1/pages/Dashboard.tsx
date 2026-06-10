@@ -22,7 +22,6 @@ import {
   mockAlerts,
   mockTimeline,
   mockSeverityDistribution,
-  mockMitreMappings,
 } from '../../../data/mockData';
 import type { ChartTheme } from '../../../types';
 

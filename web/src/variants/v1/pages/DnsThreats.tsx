@@ -3,7 +3,7 @@
  * Each tab shows filtered threat list with scores and details.
  */
 import React, { useState, useMemo } from 'react';
-import { Globe, ExternalLink, ArrowUpDown } from 'lucide-react';
+import { Globe, ArrowUpDown } from 'lucide-react';
 import type { DnsThreatResult } from '../../../types';
 import { mockDnsThreats } from '../../../data/mockData';
 

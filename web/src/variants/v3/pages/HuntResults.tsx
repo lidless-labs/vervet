@@ -1,7 +1,7 @@
 /**
  * V3 Hunt Results — Professional report with collapsible sections, print-friendly.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -26,21 +26,6 @@ import {
 } from '../../../data/mockData';
 import type { ThreatIndicator } from '../../../types';
 import AddToCase from '../../../components/AddToCase';
-
-const severityColor = (level: string): string => {
-  const map: Record<string, string> = {
-    critical: '#DC2626', high: '#EA580C', medium: '#D97706', low: '#2563EB', info: '#64748B',
-  };
-  return map[level] || '#64748B';
-};
-
-const severityBg = (level: string): string => {
-  const map: Record<string, string> = {
-    critical: 'rgba(220, 38, 38, 0.08)', high: 'rgba(234, 88, 12, 0.08)',
-    medium: 'rgba(217, 119, 6, 0.08)', low: 'rgba(37, 99, 235, 0.08)', info: 'rgba(100, 116, 139, 0.08)',
-  };
-  return map[level] || 'rgba(100, 116, 139, 0.08)';
-};
 
 interface CollapsibleProps {
   title: string;
@@ -100,7 +85,6 @@ const IndicatorRow: React.FC<{ indicator: ThreatIndicator }> = ({ indicator }) =
 const HuntResults: React.FC = () => {
   const stats = mockDashboardStats;
   const criticalAlerts = mockAlerts.filter((a) => a.level === ('critical' as any));
-  const highAlerts = mockAlerts.filter((a) => a.level === ('high' as any));
   const topBeacons = [...mockBeacons].sort((a, b) => b.beacon_score - a.beacon_score).slice(0, 5);
   const topDns = [...mockDnsThreats].sort((a, b) => b.score - a.score).slice(0, 5);
 

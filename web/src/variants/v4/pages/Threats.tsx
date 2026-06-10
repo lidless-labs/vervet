@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import {
-  X, ExternalLink, Clock, Target, Shield, Search, Filter,
+  X, ExternalLink, Clock, Target, Search, Filter,
   ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight,
   Skull, Crosshair,
 } from 'lucide-react';

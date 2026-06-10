@@ -5,7 +5,7 @@
 import React from 'react';
 import { AlertTriangle, AlertCircle, Info, Shield, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
-import type { ThreatScore, ThreatLevel } from '../../types';
+import type { ThreatScore } from '../../types';
 
 export interface AlertCardProps {
   alert: ThreatScore;

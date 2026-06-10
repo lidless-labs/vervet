@@ -2,7 +2,7 @@
  * V4 Hunt Results — Cyberpunk dossier, geometric accent headers, neon bullets, urgency glow.
  */
 import React, { useMemo, useState } from 'react';
-import { Search, Target, ExternalLink, ChevronDown, ChevronRight, FileText, AlertTriangle, CheckCircle2, Crosshair } from 'lucide-react';
+import { Target, ExternalLink, ChevronDown, ChevronRight, FileText, AlertTriangle, CheckCircle2, Crosshair } from 'lucide-react';
 import { format } from 'date-fns';
 import type { HuntResult } from '../../../types';
 import {

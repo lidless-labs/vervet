@@ -3,7 +3,7 @@
  * Score badges, expandable detail panel, BeaconScatter at top.
  */
 import React, { useState, useMemo } from 'react';
-import { X, Clock, Activity, ExternalLink, Radio, Search } from 'lucide-react';
+import { X, Clock, ExternalLink, Radio, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { mockBeacons } from '../../../data/mockData';
 import { BeaconScatter } from '../../../components/charts/BeaconScatter';

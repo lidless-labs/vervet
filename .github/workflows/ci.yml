@@ -35,8 +35,8 @@ jobs:
           cache: npm
       - name: Install deps
         run: npm ci
-      - name: Type-check and build
-        run: cd web && npx vite build
+      - name: Build frontend
+        run: npm run build
 
   docker:
     name: Docker image builds

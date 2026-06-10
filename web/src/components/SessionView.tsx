@@ -3,8 +3,8 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Network, Clock, ArrowUpDown, ChevronDown, ChevronRight,
-  AlertTriangle, Globe, Activity, Shield, Filter,
+  Network, Clock, ChevronDown, ChevronRight,
+  AlertTriangle, Globe, Activity,
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';

@@ -62,7 +62,7 @@ pip install -r requirements.txt
 VERVET_DEMO_MODE=true uvicorn api.main:app --host 0.0.0.0 --port 8000
 
 # Frontend (Vite dev server) on :5174, in another terminal
-npm install && cd web && npm run dev
+npm install && npm run dev
 ```
 
 `make dev` starts both at once. See the [Makefile](Makefile) for individual targets.

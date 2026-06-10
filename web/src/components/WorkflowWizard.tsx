@@ -18,6 +18,7 @@ interface JobState {
   step: string;
   error: string;
   results: Record<string, any>;
+  filename?: string;
 }
 
 interface WorkflowWizardProps {

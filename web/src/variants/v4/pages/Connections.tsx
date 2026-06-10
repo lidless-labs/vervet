@@ -10,7 +10,6 @@ import {
 import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { mockAlerts } from '../../../data/mockData';
-import type { ThreatScore } from '../../../types';
 
 type SortDir = 'asc' | 'desc';
 const SEVERITY_OPTIONS = ['all', 'critical', 'high', 'medium', 'low', 'info'] as const;

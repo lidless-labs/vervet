@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRightLeft, ChevronRight, Shield } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || '';
 

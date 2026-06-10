@@ -5,7 +5,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Target, ExternalLink, ChevronDown, ChevronRight, FileText, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
-import type { HuntResult, ThreatScore } from '../../../types';
+import type { HuntResult } from '../../../types';
 import {
   mockAlerts,
   mockIndicators,

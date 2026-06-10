@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useAlerts, useMitreMappings } from '../../../hooks/useApi';
 import { mockAlerts, mockMitreMappings } from '../../../data/mockData';
-import type { ThreatScore, MitreMapping } from '../../../types';
+import type { MitreMapping } from '../../../types';
 
 /* ═══ Panel ═══ */
 const Panel: React.FC<{ title: string; pid?: number; children: React.ReactNode }> = ({

@@ -2,7 +2,7 @@
  * V3 Threats — Threat table with severity badges, unified scores, MITRE grid, detail modal.
  */
 import React, { useState, useMemo } from 'react';
-import { X, ExternalLink, Clock, Target, Shield, Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, Clock, Target, Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { mockAlerts, mockMitreMappings } from '../../../data/mockData';
 import type { ThreatScore, MitreMapping } from '../../../types';

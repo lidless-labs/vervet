@@ -6,7 +6,6 @@
 import React, { useMemo } from 'react';
 import {
   AlertTriangle,
-  Shield,
   Radio,
   Globe,
   Target,
@@ -25,37 +24,9 @@ import {
   mockSeverityDistribution,
   mockAlerts,
 } from '../../../data/mockData';
-import type { ChartTheme, ThreatTimelinePoint } from '../../../types';
+import type { ThreatTimelinePoint } from '../../../types';
 
 const stats = mockDashboardStats;
-
-/* V4 Cyberpunk chart theme */
-const v4Theme: ChartTheme = {
-  colors: {
-    primary: '#00FFFF',
-    secondary: '#FF00FF',
-    accent: '#FFFF00',
-    danger: '#FF00FF',
-    warning: '#FF6600',
-    success: '#39FF14',
-    info: '#00FFFF',
-    background: '#050510',
-    surface: '#0F0A1A',
-    text: '#E0D8F0',
-    textSecondary: '#8878A8',
-    gridLine: 'rgba(255, 0, 255, 0.08)',
-    series: ['#FF00FF', '#00FFFF', '#FF6600', '#FFFF00', '#39FF14',
-      '#FF0040', '#8B5CF6', '#14B8A6', '#F97316', '#A855F7'],
-  },
-  fonts: {
-    family: 'Rajdhani, sans-serif',
-    monoFamily: 'Fira Code, monospace',
-    sizeSmall: 10,
-    sizeBase: 12,
-    sizeLarge: 14,
-  },
-  spacing: { chartPadding: 20, legendGap: 12, tooltipPadding: 10 },
-};
 
 const severityNeonColor = (level: string): string => {
   const map: Record<string, string> = {
@@ -357,7 +328,7 @@ const Dashboard: React.FC = () => {
               margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 0, 255, 0.06)" />
-              <XAxis dataKey="name" tick={{ fill: '#8878A8', fontFamily: 'Orbitron', fontSize: 9, textTransform: 'uppercase' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="name" tick={{ fill: '#8878A8', fontFamily: 'Orbitron', fontSize: 9 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#8878A8', fontFamily: 'Fira Code', fontSize: 9 }} axisLine={false} tickLine={false} />
               <Tooltip content={<NeonTooltip />} />
               <Bar dataKey="count" name="Count" radius={[2, 2, 0, 0]}>

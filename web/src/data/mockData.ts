@@ -105,8 +105,6 @@ const MITRE_TECHNIQUES: { id: string; name: string; tactic: string }[] = [
   { id: 'T1001.003', name: 'Protocol Impersonation', tactic: 'command-and-control' },
 ];
 
-const SEVERITY_LEVELS: ThreatLevel[] = ['critical', 'high', 'medium', 'low', 'info'] as ThreatLevel[];
-
 // ============================================================================
 // Mock Alerts (ThreatScore[]) — 55 entries
 // ============================================================================

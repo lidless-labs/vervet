@@ -51,13 +51,6 @@ const Stat: React.FC<{ k: string; v: string | number; cls?: string }> = ({ k, v,
   </div>
 );
 
-/* ═══ Severity label helper ═══ */
-function sevClass(level: string): string {
-  if (level === 'critical' || level === 'high') return 'critical';
-  if (level === 'medium') return 'amber';
-  return '';
-}
-
 /* ═══ Log line for alert ticker ═══ */
 const AlertLogLine: React.FC<{ alert: ThreatScore }> = ({ alert }) => {
   const ts = format(new Date(alert.last_seen * 1000), 'HH:mm:ss');

@@ -71,7 +71,7 @@ const MitreGrid: React.FC = () => {
 };
 
 /* Threat card with typographic hierarchy */
-const ThreatCard: React.FC<{ alert: ThreatScore; index: number }> = ({ alert, index }) => {
+const ThreatCard: React.FC<{ alert: ThreatScore; index: number }> = ({ alert }) => {
   const color = scoreColor(alert.score);
   const level = severityLabel(alert.score);
 

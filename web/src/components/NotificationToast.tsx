@@ -2,10 +2,10 @@
  * NotificationToast: renders stacked toast notifications.
  */
 import React from 'react';
-import { X, CheckCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, AlertCircle, Info, type LucideIcon } from 'lucide-react';
 import { useNotifications, NotificationType } from '../stores/notificationStore';
 
-const iconMap: Record<NotificationType, React.FC<{ size: number; className?: string }>> = {
+const iconMap: Record<NotificationType, LucideIcon> = {
   success: CheckCircle,
   error: AlertCircle,
   warning: AlertTriangle,

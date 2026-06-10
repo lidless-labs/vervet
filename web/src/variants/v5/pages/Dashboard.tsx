@@ -20,36 +20,8 @@ import {
   mockSeverityDistribution,
   mockAlerts,
 } from '../../../data/mockData';
-import type { ChartTheme } from '../../../types';
 
 const stats = mockDashboardStats;
-
-/* V5 chart theme: paper-white, serif annotations */
-const v5ChartTheme: ChartTheme = {
-  colors: {
-    primary: '#E54D2E',
-    secondary: '#4F46E5',
-    accent: '#0D9488',
-    danger: '#E54D2E',
-    warning: '#EAB308',
-    success: '#0D9488',
-    info: '#4F46E5',
-    background: '#FAFAF8',
-    surface: '#FAFAF8',
-    text: '#1C1917',
-    textSecondary: '#78716C',
-    gridLine: '#E7E5E4',
-    series: ['#E54D2E', '#F97316', '#EAB308', '#4F46E5', '#A8A29E'],
-  },
-  fonts: {
-    family: 'Playfair Display, Georgia, serif',
-    monoFamily: 'IBM Plex Mono, monospace',
-    sizeSmall: 11,
-    sizeBase: 12,
-    sizeLarge: 14,
-  },
-  spacing: { chartPadding: 20, legendGap: 12, tooltipPadding: 10 },
-};
 
 const severityLevel = (score: number): string => {
   if (score >= 85) return 'critical';

@@ -29,13 +29,6 @@ const WEIGHT_CONFIG = [
   { key: 'long_connection', label: 'Long Connections', icon: Timer, color: 'purple' },
 ] as const;
 
-const COLOR_MAP: Record<string, string> = {
-  cyan: 'accent-cyan-500',
-  blue: 'accent-blue-500',
-  orange: 'accent-orange-500',
-  purple: 'accent-purple-500',
-};
-
 const DEFAULT_WEIGHTS: Weights = {
   beacon: 0.30,
   dns_threat: 0.25,
@@ -49,11 +42,11 @@ interface ScoringTunerProps {
 
 const ScoringTuner: React.FC<ScoringTunerProps> = ({ className = '' }) => {
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
-  const [savedWeights, setSavedWeights] = useState<Weights>(DEFAULT_WEIGHTS);
+  const [, setSavedWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [preview, setPreview] = useState<ThreatPreview[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [, setDirty] = useState(false);
 
   useEffect(() => {
     fetchWeights();

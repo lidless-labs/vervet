@@ -3,7 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import {
-  Radio, Play, Square, Trash2, Download, RefreshCw, Wifi, Loader2, AlertCircle,
+  Radio, Play, Square, Trash2, Wifi, Loader2, AlertCircle,
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -48,7 +48,6 @@ const LiveCapture: React.FC<LiveCaptureProps> = ({ className = '' }) => {
   const [selectedIface, setSelectedIface] = useState('any');
   const [filter, setFilter] = useState('');
   const [maxPackets, setMaxPackets] = useState(10000);
-  const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {

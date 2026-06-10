@@ -19,7 +19,7 @@ interface GlobalSearchProps {
   onNavigate?: (path: string) => void;
 }
 
-const GlobalSearch: React.FC<GlobalSearchProps> = ({ onNavigate }) => {
+const GlobalSearch: React.FC<GlobalSearchProps> = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResults | null>(null);

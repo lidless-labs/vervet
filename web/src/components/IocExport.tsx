@@ -2,7 +2,7 @@
  * IOC Export Component - Export threat indicators in CSV, STIX, or OpenIOC format.
  */
 import React, { useState } from 'react';
-import { Download, FileText, FileJson, FileCode, ChevronDown, Filter } from 'lucide-react';
+import { Download, FileText, FileJson, FileCode, ChevronDown } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -15,13 +15,6 @@ const FORMAT_CONFIG: Record<ExportFormat, { label: string; icon: React.ElementTy
   openioc: { label: 'OpenIOC', icon: FileCode, ext: '.xml' },
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  info: 'text-gray-400',
-  low: 'text-green-400',
-  medium: 'text-yellow-400',
-  high: 'text-orange-400',
-  critical: 'text-red-400',
-};
 
 interface IocExportProps {
   className?: string;

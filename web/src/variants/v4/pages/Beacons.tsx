@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   X, Clock, ExternalLink, Radio, Search,
-  Activity, Crosshair, Wifi,
+  Activity, Wifi,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -13,18 +13,13 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar, Cell,
 } from 'recharts';
 import { mockBeacons } from '../../../data/mockData';
-import type { BeaconResult, ChartTheme } from '../../../types';
+import type { BeaconResult } from '../../../types';
 
 const scoreNeon = (score: number): string => {
   if (score >= 85) return '#FF00FF';
   if (score >= 65) return '#FF6600';
   if (score >= 40) return '#FFFF00';
   return '#39FF14';
-};
-
-const scoreGlow = (score: number): string => {
-  const c = scoreNeon(score);
-  return `0 0 10px ${c}80`;
 };
 
 const scoreLabel = (score: number): string => {

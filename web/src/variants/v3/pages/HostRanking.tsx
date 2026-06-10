@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ShieldAlert, Radar, Search, Server, Globe2 } from 'lucide-react';
+import { ShieldAlert, Radar, Search, Server, Globe2 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
