@@ -3,7 +3,7 @@
  * Professional enterprise layout with collapsible sidebar, header, breadcrumbs.
  * Splunk/Elastic-inspired clean aesthetic.
  *
- * Now the primary (and only shipped) variant. Other variants live under /dev/N for development only.
+ * This is the shipped Vervet UI.
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, NavLink, Navigate, Link, useLocation } from 'react-router-dom';
@@ -15,7 +15,6 @@ import {
   Search,
   Globe,
   ListTree,
-  ArrowLeft,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
@@ -74,7 +73,7 @@ import './styles.css';
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 interface V3AppProps {
-  /** Base path prefix for routes. '/' in production, '/dev/3' in dev mode. */
+  /** Base path prefix for routes. */
   basePath?: string;
 }
 
@@ -206,12 +205,6 @@ const V3App: React.FC<V3AppProps> = ({ basePath = '/' }) => {
             {collapsed ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
             {!collapsed && <span>Collapse</span>}
           </button>
-          {isDevMode && (
-            <Link to="/dev" aria-label="Back to dev variants">
-              <ArrowLeft size={14} aria-hidden="true" />
-              {!collapsed && <span>Dev Variants</span>}
-            </Link>
-          )}
         </div>
       </nav>
 
