@@ -13,12 +13,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/actions/workflow/status/lidless-labs/vervet/ci.yml?branch=main&style=for-the-badge&label=ci" alt="CI">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="Version 0.1.0">
-  <img src="https://img.shields.io/badge/python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11+">
-  <img src="https://img.shields.io/badge/react-18-61DAFB?style=for-the-badge&logo=react&logoColor=0f172a" alt="React 18">
-  <img src="https://img.shields.io/badge/MITRE_ATT%26CK-mapped-f97316?style=for-the-badge" alt="MITRE ATT&CK mapped">
-  <img src="https://img.shields.io/badge/license-Apache--2.0-green?style=for-the-badge" alt="Apache-2.0">
+  <img src="https://shieldcn.dev/github/ci/lidless-labs/vervet.svg?branch=main&workflow=ci.yml" alt="CI">
+  <img src="https://shieldcn.dev/badge/version-0.1.0-blue.svg" alt="Version 0.1.0">
+  <img src="https://shieldcn.dev/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+">
+  <img src="https://shieldcn.dev/badge/react-18-61DAFB.svg?logo=react&logoColor=0f172a" alt="React 18">
+  <img src="https://shieldcn.dev/badge/MITRE_ATT%26CK-mapped-f97316.svg" alt="MITRE ATT&CK mapped">
+  <img src="https://shieldcn.dev/badge/license-Apache--2.0-green.svg" alt="Apache-2.0">
 </p>
 
 Point Vervet at a directory of Zeek and Suricata logs and it surfaces the threats hiding in them: C2 beacons phoning home on a fixed interval, DNS tunneling and DGA domains, data exfiltration, lateral movement, and long-lived connections that shouldn't exist. Every flagged host gets a transparent risk score with the **evidence chain that produced it** and the **MITRE ATT&CK techniques** it maps to, so an analyst sees not just *what* fired but *why*. It runs as a single container on your own hardware. No cloud, no telemetry, no live tap required, and it never touches your network, it only reads logs you already collect.
