@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/vervet-banner.jpg" alt="vervet banner" width="900">
+  <img src="docs/assets/vervet-social-preview.jpg" alt="vervet social preview" width="900">
 </p>
 
 <h1 align="center">Vervet</h1>
@@ -9,6 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="https://vervet.dev"><strong>Website</strong></a>
+  &nbsp;·&nbsp;
   <a href="https://demo.vervet.dev">Live demo</a>
 </p>
 
@@ -41,15 +43,28 @@ Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and w
 
 <p align="center"><sub>Demo data: real Zeek logs (sanitized) with a synthetic C2 beacon and DNS-tunnel scenario layered in. Every address is an RFC 5737 / RFC 2544 documentation range.</sub></p>
 
-## Try it with zero logs of your own
+## What it does
 
-Demo mode loads a realistic sample environment (beaconing C2, DNS tunneling, a noisy Suricata sensor) so the dashboard shows scored, explained threats immediately:
+Vervet is a self-hosted network threat hunting platform for Zeek and Suricata logs. It parses existing log files into a common event model, runs deterministic detection engines for beaconing, DNS abuse, DGA domains, fast-flux, lateral movement, long connections, and Suricata alerts, then rolls findings into per-host risk scores with evidence chains and MITRE ATT&CK mappings.
+
+It serves a FastAPI backend and React UI from one container, supports demo data for evaluation, accepts batch directory ingestion, and exposes REST endpoints for cases, reports, rules, exports, live ingest, and integrations with TheHive, Wazuh, and MISP.
+
+
+## Install
+
+Demo mode loads a realistic sample environment so the dashboard shows scored, explained threats immediately:
 
 ```bash
 git clone https://github.com/lidless-labs/vervet.git
 cd vervet
 docker compose up -d --build
-# open http://localhost:8000
+curl http://localhost:8000/health
+```
+
+Expected output:
+
+```json
+{"status":"healthy"}
 ```
 
 The container serves the API and the web UI on the same port and seeds the demo data on startup. Stop it with `docker compose down`.
