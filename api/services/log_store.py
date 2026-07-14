@@ -48,6 +48,37 @@ class LogStore:
         self._src_ip_index: dict[str, list[int]] = defaultdict(list)
         self._dst_ip_index: dict[str, list[int]] = defaultdict(list)
 
+        # Optional durable backing store (attached at startup for non-demo runs).
+        # When present, every write is mirrored to disk and reloaded on restart.
+        self._persistence = None
+        # When True, per-record writes skip persistence (a bulk load persists once
+        # at the end instead of committing per row).
+        self._deferred = False
+
+    def attach_persistence(self, persistence) -> None:
+        """Attach a durable backing store (see api.services.persistence)."""
+        self._persistence = persistence
+
+    def rehydrate(self) -> None:
+        """Reload the in-memory store from the persistence backend, if attached."""
+        if not self._persistence:
+            return
+        connections, dns_queries, alerts = self._persistence.load_all()
+        for conn in connections:
+            self._add_connection(conn, persist=False)
+        for query in dns_queries:
+            self._add_dns_query(query, persist=False)
+        for alert in alerts:
+            self._add_alert(alert, persist=False)
+        self.file_count = self._persistence.get_meta("file_count", 0) or 0
+        self.total_records = len(connections) + len(dns_queries) + len(alerts)
+        if self.total_records:
+            logger.info(
+                "Rehydrated %d records from %s",
+                self.total_records,
+                self._persistence.db_path,
+            )
+
     def clear(self):
         """Clear all stored logs."""
         self.connections.clear()
@@ -60,6 +91,9 @@ class LogStore:
         self.total_records = 0
         self.min_timestamp = None
         self.max_timestamp = None
+
+        if self._persistence:
+            self._persistence.clear()
 
         logger.info("Log store cleared")
 
@@ -88,8 +122,10 @@ class LogStore:
 
         logger.info(f"Loading logs from directory: {directory_path}")
 
-        # Clear existing data
+        # Clear existing data (also clears the backing store, if attached)
         self.clear()
+        # Defer per-record persistence; the whole set is written once at the end.
+        self._deferred = True
 
         files_processed = 0
         records_loaded = 0
@@ -153,8 +189,17 @@ class LogStore:
                 logger.error(f"Error loading {file_path}: {e}")
                 continue
 
+        self._deferred = False
         self.file_count = files_processed
         self.total_records = records_loaded
+
+        # Persist the freshly loaded set in one batch. clear() already emptied the
+        # backing store, so this replaces any prior data rather than appending.
+        if self._persistence:
+            self._persistence.bulk_insert("connections", self.connections)
+            self._persistence.bulk_insert("dns_queries", self.dns_queries)
+            self._persistence.bulk_insert("alerts", self.alerts)
+            self._persistence.set_meta("file_count", self.file_count)
 
         logger.info(
             f"Loaded {files_processed} files, {records_loaded} records. "
@@ -175,7 +220,7 @@ class LogStore:
             "alerts": len(self.alerts),
         }
 
-    def _add_connection(self, conn: Connection):
+    def _add_connection(self, conn: Connection, persist: bool = True):
         """Add connection to store and update indices."""
         idx = len(self.connections)
         self.connections.append(conn)
@@ -187,15 +232,24 @@ class LogStore:
         # Update timestamp range
         self._update_time_range(conn.timestamp)
 
-    def _add_dns_query(self, query: DnsQuery):
+        if persist and self._persistence and not self._deferred:
+            self._persistence.insert_connection(conn)
+
+    def _add_dns_query(self, query: DnsQuery, persist: bool = True):
         """Add DNS query to store."""
         self.dns_queries.append(query)
         self._update_time_range(query.timestamp)
 
-    def _add_alert(self, alert: Alert):
+        if persist and self._persistence and not self._deferred:
+            self._persistence.insert_dns_query(query)
+
+    def _add_alert(self, alert: Alert, persist: bool = True):
         """Add alert to store."""
         self.alerts.append(alert)
         self._update_time_range(alert.timestamp)
+
+        if persist and self._persistence and not self._deferred:
+            self._persistence.insert_alert(alert)
 
     def _update_time_range(self, timestamp: datetime):
         """Update min/max timestamp range."""
