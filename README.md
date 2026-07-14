@@ -38,7 +38,7 @@ Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and w
 
 <p align="center">
   <img src="docs/assets/screenshots/threats.png" width="49%" alt="Per-host threat scoring mapped to MITRE ATT&CK by tactic">
-  <img src="docs/assets/screenshots/dashboard.png" width="49%" alt="SOC dashboard overview">
+  <img src="docs/assets/screenshots/dns.png" width="49%" alt="DNS threat detection: tunneling, DGA, and suspicious query patterns">
 </p>
 
 <p align="center"><sub>Demo data: real Zeek logs (sanitized) with a synthetic C2 beacon and DNS-tunnel scenario layered in. Every address is an RFC 5737 / RFC 2544 documentation range.</sub></p>
