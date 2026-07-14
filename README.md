@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://vervet.dev"><strong>Website</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://demo.vervet.dev">Live demo</a>
+  <a href="#install">Quickstart</a>
 </p>
 
 <p align="center">
@@ -28,8 +28,8 @@ Point Vervet at a directory of Zeek and Suricata logs and it surfaces the threat
 Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and want the analyst layer that hunts the logs for them, the way RITA and AC-Hunter do for beaconing, but UI-first, MITRE-mapped, and speaking both sensors.
 
 <p align="center">
-  <strong>▶ Try the live demo: <a href="https://demo.vervet.dev">demo.vervet.dev</a></strong><br>
-  <sub>No install. Real (sanitized) traffic with a C2 beacon and DNS tunnel already detected.</sub>
+  <strong>▶ Try the demo in one command: <a href="#install"><code>docker compose up -d --build</code></a></strong><br>
+  <sub>Boots the full UI on sanitized traffic with a C2 beacon and DNS tunnel already detected, at <code>http://localhost:8000</code>.</sub>
 </p>
 
 <p align="center">
