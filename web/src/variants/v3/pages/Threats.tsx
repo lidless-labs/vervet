@@ -1,12 +1,70 @@
 /**
  * V3 Threats — Threat table with severity badges, unified scores, MITRE grid, detail modal.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, ExternalLink, Clock, Target, Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
-import { mockAlerts, mockMitreMappings } from '../../../data/mockData';
-import type { ThreatScore, MitreMapping } from '../../../types';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
 import AddToCase from '../../../components/AddToCase';
+
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+const safeFetch = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return res.json();
+};
+
+/** Row shape from GET /api/v1/analysis/threats (list has counts only, no arrays). */
+interface ThreatRow {
+  entity: string;
+  score: number; // 0..1
+  level: string;
+  confidence: number; // 0..1
+  reasons: string[];
+  indicators_count: number;
+  mitre_techniques_count: number;
+  first_seen: number; // epoch seconds
+  last_seen: number; // epoch seconds
+}
+
+/** Mapping shape from GET /api/v1/analysis/mitre. */
+interface MitreMappingRow {
+  technique_id: string;
+  technique_name: string;
+  tactic: string;
+  tactic_id: string;
+  confidence: number; // 0..1
+  detection_count: number;
+  affected_hosts: string[];
+}
+
+/** Indicator object from the threat detail endpoint. */
+interface IndicatorObj {
+  indicator_type: string;
+  value: string;
+  description: string;
+  severity: string;
+  source: string;
+  detection_time: number;
+}
+
+/** Shape from GET /api/v1/analysis/threats/{entity}. */
+interface ThreatDetail {
+  ip: string;
+  score: number; // 0..1
+  threat_level: string;
+  confidence: number; // 0..1
+  beacon_count: number;
+  dns_threat_count: number;
+  alert_count: number;
+  long_connection_count: number;
+  reasons: string[];
+  indicators: IndicatorObj[];
+  mitre_techniques: string[];
+  first_seen: number;
+  last_seen: number;
+}
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
 
@@ -25,15 +83,23 @@ const severityBg = (level: string): string => {
   return map[level] || 'rgba(100, 116, 139, 0.08)';
 };
 
-const MitreGrid: React.FC = () => {
+const MitreGrid: React.FC<{ mappings: MitreMappingRow[] }> = ({ mappings }) => {
   const tactics = useMemo(() => {
-    const grouped: Record<string, MitreMapping[]> = {};
-    mockMitreMappings.forEach((m) => {
+    const grouped: Record<string, MitreMappingRow[]> = {};
+    mappings.forEach((m) => {
       if (!grouped[m.tactic]) grouped[m.tactic] = [];
       grouped[m.tactic].push(m);
     });
     return grouped;
-  }, []);
+  }, [mappings]);
+
+  if (mappings.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '24px 16px', color: '#94A3B8', fontSize: 13 }}>
+        No MITRE ATT&CK techniques detected.
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -69,130 +135,166 @@ const MitreGrid: React.FC = () => {
   );
 };
 
-const DetailModal: React.FC<{ threat: ThreatScore; onClose: () => void }> = ({ threat, onClose }) => (
-  <div className="v3-modal-backdrop" onClick={onClose}>
-    <div className="v3-modal" onClick={(e) => e.stopPropagation()}>
-      <div className="v3-modal-header">
-        <div>
-          <h2 className="v3-heading" style={{ fontSize: 18, margin: 0 }}>Threat Detail</h2>
-          <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Source Code Pro, monospace', margin: '4px 0 0' }}>
-            {threat.entity}
-          </p>
-        </div>
-        <button className="v3-slide-over-close" onClick={onClose}><X size={18} /></button>
-      </div>
-      <div className="v3-modal-body">
-        {/* Score + Severity */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 10,
-            background: severityBg(threat.level as string), color: severityColor(threat.level as string),
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 22,
-          }}>
-            {threat.score}
-          </div>
+const DetailModal: React.FC<{ threat: ThreatRow; onClose: () => void }> = ({ threat, onClose }) => {
+  const [detail, setDetail] = useState<ThreatDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data: ThreatDetail = await safeFetch(`${API_BASE}/api/v1/analysis/threats/${encodeURIComponent(threat.entity)}`);
+        if (active) setDetail(data);
+      } catch (err) {
+        if (active) setError(err instanceof Error ? err.message : 'Failed to load threat detail');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [threat.entity]);
+
+  const level = detail?.threat_level ?? threat.level;
+  const score = detail?.score ?? threat.score;
+  const confidence = detail?.confidence ?? threat.confidence;
+  const occurrences = detail
+    ? detail.beacon_count + detail.dns_threat_count + detail.alert_count + detail.long_connection_count
+    : 0;
+
+  return (
+    <div className="v3-modal-backdrop" onClick={onClose}>
+      <div className="v3-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="v3-modal-header">
           <div>
-            <span className={`v3-badge ${threat.level}`}>{threat.level}</span>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-              Confidence: {(threat.confidence * 100).toFixed(0)}% · {threat.occurrence_count} occurrences
-            </div>
+            <h2 className="v3-heading" style={{ fontSize: 18, margin: 0 }}>Threat Detail</h2>
+            <p style={{ fontSize: 12, color: '#64748B', fontFamily: 'Source Code Pro, monospace', margin: '4px 0 0' }}>
+              {threat.entity}
+            </p>
           </div>
+          <button className="v3-slide-over-close" onClick={onClose}><X size={18} /></button>
         </div>
-
-        {/* Timeline */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock size={14} style={{ color: '#64748B' }} />
-            <div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>First Seen</div>
-              <div className="v3-data" style={{ fontSize: 12, color: '#1E293B' }}>
-                {format(new Date(threat.first_seen * 1000), 'MMM d, yyyy HH:mm:ss')}
-              </div>
+        <div className="v3-modal-body">
+          {error && (
+            <div style={{ background: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.3)', color: '#B91C1C', fontSize: 13, borderRadius: 6, padding: '10px 12px', marginBottom: 16 }}>
+              {error}
             </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock size={14} style={{ color: '#64748B' }} />
-            <div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>Last Seen</div>
-              <div className="v3-data" style={{ fontSize: 12, color: '#1E293B' }}>
-                {format(new Date(threat.last_seen * 1000), 'MMM d, yyyy HH:mm:ss')}
-              </div>
-            </div>
-          </div>
-        </div>
+          )}
 
-        <div className="v3-divider" />
-
-        {/* Reasons */}
-        <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8 }}>Detection Reasons</h3>
-        <ul style={{ margin: 0, padding: 0, listStyle: 'none', marginBottom: 20 }}>
-          {threat.reasons.map((r, i) => (
-            <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6, fontSize: 13, color: '#475569' }}>
-              <span style={{ marginTop: 6, width: 5, height: 5, borderRadius: '50%', background: '#2563EB', flexShrink: 0 }} />
-              {r}
-            </li>
-          ))}
-        </ul>
-
-        {/* MITRE */}
-        {threat.mitre_techniques.length > 0 && (
-          <>
-            <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Target size={14} /> MITRE ATT&CK
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-              {threat.mitre_techniques.map((t) => (
-                <a
-                  key={t}
-                  href={`https://attack.mitre.org/techniques/${t.replace('.', '/')}/`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="v3-tag" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                >
-                  {t} <ExternalLink size={10} />
-                </a>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Indicators */}
-        {threat.indicators.length > 0 && (
-          <>
-            <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8 }}>Indicators</h3>
-            <div style={{ marginBottom: 20 }}>
-              {threat.indicators.map((ind, i) => (
-                <div key={i} className="v3-data" style={{ fontSize: 12, color: '#475569', background: '#F8FAFC', padding: '6px 10px', borderRadius: 4, marginBottom: 4, border: '1px solid #E2E8F0' }}>
-                  {ind}
+          {loading ? (
+            <LoadingSkeleton rows={6} />
+          ) : (
+            <>
+              {/* Score + Severity */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: 10,
+                  background: severityBg(level), color: severityColor(level),
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 22,
+                }}>
+                  {Math.round(score * 100)}
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+                <div>
+                  <span className={`v3-badge ${level}`}>{level}</span>
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                    Confidence: {Math.round(confidence * 100)}%
+                    {detail ? ` · ${occurrences} occurrences` : ''}
+                  </div>
+                </div>
+              </div>
 
-        {/* Related */}
-        {(threat.related_ips.length > 0 || threat.related_domains.length > 0) && (
-          <>
-            <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8 }}>Related Entities</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {threat.related_ips.map((ip) => (
-                <span key={ip} className="v3-data" style={{ fontSize: 11, background: '#F1F5F9', padding: '3px 8px', borderRadius: 4, color: '#475569' }}>{ip}</span>
-              ))}
-              {threat.related_domains.map((d) => (
-                <span key={d} className="v3-data" style={{ fontSize: 11, background: '#F1F5F9', padding: '3px 8px', borderRadius: 4, color: '#475569' }}>{d}</span>
-              ))}
-            </div>
-          </>
-        )}
+              {/* Timeline */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Clock size={14} style={{ color: '#64748B' }} />
+                  <div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>First Seen</div>
+                    <div className="v3-data" style={{ fontSize: 12, color: '#1E293B' }}>
+                      {format(new Date((detail?.first_seen ?? threat.first_seen) * 1000), 'MMM d, yyyy HH:mm:ss')}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Clock size={14} style={{ color: '#64748B' }} />
+                  <div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>Last Seen</div>
+                    <div className="v3-data" style={{ fontSize: 12, color: '#1E293B' }}>
+                      {format(new Date((detail?.last_seen ?? threat.last_seen) * 1000), 'MMM d, yyyy HH:mm:ss')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="v3-divider" />
+
+              {/* Reasons */}
+              <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8 }}>Detection Reasons</h3>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', marginBottom: 20 }}>
+                {(detail?.reasons ?? threat.reasons).map((r, i) => (
+                  <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6, fontSize: 13, color: '#475569' }}>
+                    <span style={{ marginTop: 6, width: 5, height: 5, borderRadius: '50%', background: '#2563EB', flexShrink: 0 }} />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+
+              {/* MITRE */}
+              {detail && detail.mitre_techniques.length > 0 && (
+                <>
+                  <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Target size={14} /> MITRE ATT&CK
+                  </h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+                    {detail.mitre_techniques.map((t) => (
+                      <a
+                        key={t}
+                        href={`https://attack.mitre.org/techniques/${t.replace('.', '/')}/`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="v3-tag" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        {t} <ExternalLink size={10} />
+                      </a>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Indicators */}
+              {detail && detail.indicators.length > 0 && (
+                <>
+                  <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 8 }}>Indicators</h3>
+                  <div style={{ marginBottom: 20 }}>
+                    {detail.indicators.map((ind, i) => (
+                      <div key={i} className="v3-data" style={{ fontSize: 12, color: '#475569', background: '#F8FAFC', padding: '6px 10px', borderRadius: 4, marginBottom: 4, border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontFamily: 'Source Code Pro, monospace', color: '#1E293B' }}>{ind.value}</div>
+                        {ind.description && (
+                          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{ind.description}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 type SortDir = 'asc' | 'desc';
 
 const Threats: React.FC = () => {
-  const [selected, setSelected] = useState<ThreatScore | null>(null);
+  const [threats, setThreats] = useState<ThreatRow[]>([]);
+  const [mitreMappings, setMitreMappings] = useState<MitreMappingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const [selected, setSelected] = useState<ThreatRow | null>(null);
   const [search, setSearch] = useState('');
   const [severity, setSeverity] = useState('all');
   const [sortKey, setSortKey] = useState('score');
@@ -200,27 +302,45 @@ const Threats: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [threatsRes, mitreRes] = await Promise.all([
+          safeFetch(`${API_BASE}/api/v1/analysis/threats`),
+          safeFetch(`${API_BASE}/api/v1/analysis/mitre`),
+        ]);
+        setThreats(threatsRes?.threats || []);
+        setMitreMappings(mitreRes?.mappings || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load threats');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
-    let data = [...mockAlerts];
+    let data = [...threats];
     if (severity !== 'all') data = data.filter((a) => a.level === severity);
     if (search) {
       const q = search.toLowerCase();
       data = data.filter((a) =>
         a.entity.toLowerCase().includes(q) ||
-        a.indicators.some((ind) => ind.toLowerCase().includes(q)) ||
-        a.mitre_techniques.some((t) => t.toLowerCase().includes(q))
+        a.reasons.some((r) => r.toLowerCase().includes(q))
       );
     }
     return data;
-  }, [search, severity]);
+  }, [threats, search, severity]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
     arr.sort((a, b) => {
-      let va: any, vb: any;
+      let va: string | number, vb: string | number;
       switch (sortKey) {
         case 'entity': va = a.entity; vb = b.entity; break;
-        case 'level': va = SEVERITY_ORDER[a.level as string] ?? 5; vb = SEVERITY_ORDER[b.level as string] ?? 5; break;
+        case 'level': va = SEVERITY_ORDER[a.level] ?? 5; vb = SEVERITY_ORDER[b.level] ?? 5; break;
         case 'score': va = a.score; vb = b.score; break;
         case 'confidence': va = a.confidence; vb = b.confidence; break;
         case 'last_seen': va = a.last_seen; vb = b.last_seen; break;
@@ -246,6 +366,10 @@ const Threats: React.FC = () => {
     return sortDir === 'asc' ? <ChevronUp size={12} style={{ color: '#2563EB' }} /> : <ChevronDown size={12} style={{ color: '#2563EB' }} />;
   };
 
+  if (loading) {
+    return <LoadingSkeleton rows={8} />;
+  }
+
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
@@ -254,6 +378,12 @@ const Threats: React.FC = () => {
           Unified threat scores with MITRE ATT&CK mapping · {sorted.length} threats
         </p>
       </div>
+
+      {error && (
+        <div style={{ background: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.3)', color: '#B91C1C', fontSize: 13, borderRadius: 6, padding: '10px 12px', marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
 
       {/* MITRE Grid */}
       <div className="v3-card" style={{ marginBottom: 20 }}>
@@ -265,7 +395,7 @@ const Threats: React.FC = () => {
             <div className="v3-card-subtitle">Detected techniques grouped by tactic</div>
           </div>
         </div>
-        <MitreGrid />
+        <MitreGrid mappings={mitreMappings} />
       </div>
 
       {/* Filters */}
@@ -331,16 +461,16 @@ const Threats: React.FC = () => {
                     <td><span className={`v3-badge ${a.level}`}>{a.level}</span></td>
                     <td className="mono">{a.entity}</td>
                     <td>
-                      <span className="v3-score-badge" style={{ background: severityBg(a.level as string), color: severityColor(a.level as string) }}>
-                        {a.score}
+                      <span className="v3-score-badge" style={{ background: severityBg(a.level), color: severityColor(a.level) }}>
+                        {Math.round(a.score * 100)}
                       </span>
                     </td>
-                    <td style={{ color: '#64748B', fontSize: 12 }}>{(a.confidence * 100).toFixed(0)}%</td>
+                    <td style={{ color: '#64748B', fontSize: 12 }}>{Math.round(a.confidence * 100)}%</td>
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {a.mitre_techniques.slice(0, 2).map((t) => (
-                          <span key={t} className="v3-tag" style={{ fontSize: 10, padding: '1px 6px' }}>{t}</span>
-                        ))}
+                        <span className="v3-tag" style={{ fontSize: 10, padding: '1px 6px' }}>
+                          {a.mitre_techniques_count} techniques
+                        </span>
                       </div>
                     </td>
                     <td style={{ color: '#64748B', fontSize: 12 }}>
@@ -350,8 +480,8 @@ const Threats: React.FC = () => {
                       <AddToCase
                         findingType="alert"
                         summary={`Threat detected: ${a.entity}`}
-                        severity={a.level as string}
-                        data={{ entity: a.entity, reasons: a.reasons, mitre_techniques: a.mitre_techniques }}
+                        severity={a.level}
+                        data={{ entity: a.entity, reasons: a.reasons, mitre_techniques_count: a.mitre_techniques_count }}
                       />
                     </td>
                   </tr>
