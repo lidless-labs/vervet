@@ -43,9 +43,9 @@ async def lifespan(application):
     """Startup: load demo data if enabled."""
     import os, traceback
     raw_env = os.environ.get("VERVET_DEMO_MODE", "unset")
-    demo = getattr(settings, "demo_mode", False)
-    print(f"[STARTUP] Demo check: env={raw_env}, settings.demo_mode={demo}", flush=True)
-    if demo or str(raw_env).lower() in ("true", "1", "yes"):
+    demo = getattr(settings, "demo_mode", False) or str(raw_env).lower() in ("true", "1", "yes")
+    print(f"[STARTUP] Demo check: env={raw_env}, demo_active={demo}", flush=True)
+    if demo:
         try:
             svc = DemoDataService()
             print(f"[STARTUP] Demo data dir: {svc.data_dir}, exists: {svc.data_dir.exists()}", flush=True)
@@ -60,6 +60,22 @@ async def lifespan(application):
                 tracker.seed_demo_trends()
         except Exception:
             print(f"[STARTUP] Failed to load demo data:\n{traceback.format_exc()}", flush=True)
+    elif settings.data_dir:
+        # Durable mode: mirror ingested logs to <data_dir>/vervet.db and reload
+        # whatever was ingested before the last restart.
+        try:
+            from api.services.persistence import LogPersistence
+
+            db_path = os.path.join(settings.data_dir, "vervet.db")
+            log_store.attach_persistence(LogPersistence(db_path))
+            log_store.rehydrate()
+            print(
+                f"[STARTUP] Persistence at {db_path}; "
+                f"rehydrated {log_store.total_records} record(s)",
+                flush=True,
+            )
+        except Exception:
+            print(f"[STARTUP] Failed to init persistence:\n{traceback.format_exc()}", flush=True)
     yield
 
 # Initialize FastAPI app

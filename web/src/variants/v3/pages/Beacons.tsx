@@ -2,12 +2,44 @@
  * V3 Beacons — Beacon analysis with scatter plot, cards, and slide-over detail.
  * Score badges, expandable detail panel, BeaconScatter at top.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { X, Clock, ExternalLink, Radio, Search } from 'lucide-react';
 import { format } from 'date-fns';
-import { mockBeacons } from '../../../data/mockData';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
 import { BeaconScatter } from '../../../components/charts/BeaconScatter';
-import type { BeaconResult, ChartTheme } from '../../../types';
+import type { ChartTheme } from '../../../types';
+
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+/** Real /api/v1/hunt/beacons row. No `id` in the API — we synthesize one from src/dst/port. */
+interface Beacon {
+  id: string;
+  src_ip: string;
+  dst_ip: string;
+  dst_port: number;
+  proto: string;
+  connection_count: number;
+  time_span_seconds: number;
+  avg_interval_seconds: number;
+  median_interval_seconds: number;
+  min_interval_seconds: number;
+  max_interval_seconds: number;
+  interval_std_dev: number;
+  jitter_pct: number;
+  data_size_avg: number | null;
+  data_size_variance: number | null;
+  beacon_score: number;
+  confidence: number;
+  reasons: string[];
+  mitre_techniques: string[];
+  first_seen: number;
+  last_seen: number;
+}
+
+interface BeaconsResponse {
+  beacons: Beacon[];
+  total: number;
+}
 
 const v3ChartTheme: ChartTheme = {
   colors: {
@@ -51,7 +83,7 @@ const scoreLabel = (score: number): string => {
   return 'Low';
 };
 
-const BeaconCard: React.FC<{ beacon: BeaconResult; onClick: () => void }> = ({ beacon, onClick }) => (
+const BeaconCard: React.FC<{ beacon: Beacon; onClick: () => void }> = ({ beacon, onClick }) => (
   <div
     className="v3-card"
     style={{ cursor: 'pointer', padding: 16, transition: 'box-shadow 0.15s' }}
@@ -73,7 +105,7 @@ const BeaconCard: React.FC<{ beacon: BeaconResult; onClick: () => void }> = ({ b
         className="v3-score-badge"
         style={{ background: scoreBg(beacon.beacon_score), color: scoreColor(beacon.beacon_score), fontWeight: 700, fontSize: 14 }}
       >
-        {beacon.beacon_score}
+        {beacon.beacon_score.toFixed(1)}
       </span>
     </div>
 
@@ -82,7 +114,7 @@ const BeaconCard: React.FC<{ beacon: BeaconResult; onClick: () => void }> = ({ b
       <div>
         <div style={{ color: '#94A3B8', fontSize: 11 }}>Interval</div>
         <div style={{ fontFamily: 'Source Code Pro, monospace', fontWeight: 500, color: '#1E293B' }}>
-          {beacon.avg_interval_seconds}s
+          {beacon.avg_interval_seconds.toFixed(1)}s
         </div>
       </div>
       <div>
@@ -111,7 +143,7 @@ const BeaconCard: React.FC<{ beacon: BeaconResult; onClick: () => void }> = ({ b
   </div>
 );
 
-const DetailSlideOver: React.FC<{ beacon: BeaconResult; onClose: () => void }> = ({ beacon, onClose }) => (
+const DetailSlideOver: React.FC<{ beacon: Beacon; onClose: () => void }> = ({ beacon, onClose }) => (
   <>
     <div className="v3-slide-over-backdrop" onClick={onClose} />
     <div className="v3-slide-over">
@@ -134,7 +166,7 @@ const DetailSlideOver: React.FC<{ beacon: BeaconResult; onClose: () => void }> =
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 24,
           }}>
-            {beacon.beacon_score}
+            {Math.round(beacon.beacon_score)}
           </div>
           <div>
             <span
@@ -144,7 +176,7 @@ const DetailSlideOver: React.FC<{ beacon: BeaconResult; onClose: () => void }> =
               {scoreLabel(beacon.beacon_score)} Risk
             </span>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-              Confidence: {(beacon.confidence * 100).toFixed(0)}%
+              Confidence: {Math.round(beacon.confidence * 100)}%
             </div>
           </div>
         </div>
@@ -177,14 +209,14 @@ const DetailSlideOver: React.FC<{ beacon: BeaconResult; onClose: () => void }> =
         <h3 className="v3-heading" style={{ fontSize: 14, marginBottom: 12 }}>Beacon Metrics</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
           {[
-            { label: 'Avg Interval', value: `${beacon.avg_interval_seconds}s` },
+            { label: 'Avg Interval', value: `${beacon.avg_interval_seconds.toFixed(1)}s` },
             { label: 'Median Interval', value: `${beacon.median_interval_seconds.toFixed(1)}s` },
             { label: 'Min Interval', value: `${beacon.min_interval_seconds.toFixed(1)}s` },
             { label: 'Max Interval', value: `${beacon.max_interval_seconds.toFixed(1)}s` },
             { label: 'Std Dev', value: `${beacon.interval_std_dev.toFixed(2)}` },
             { label: 'Jitter', value: `${beacon.jitter_pct.toFixed(1)}%` },
             { label: 'Connections', value: `${beacon.connection_count}` },
-            { label: 'Avg Data Size', value: beacon.data_size_avg ? `${beacon.data_size_avg}B` : 'N/A' },
+            { label: 'Avg Data Size', value: beacon.data_size_avg ? `${beacon.data_size_avg.toFixed(0)}B` : 'N/A' },
           ].map((m) => (
             <div key={m.label} style={{ padding: '8px 12px', background: '#F8FAFC', borderRadius: 6, border: '1px solid #E2E8F0' }}>
               <div style={{ fontSize: 11, color: '#94A3B8' }}>{m.label}</div>
@@ -232,12 +264,44 @@ const DetailSlideOver: React.FC<{ beacon: BeaconResult; onClose: () => void }> =
 );
 
 const Beacons: React.FC = () => {
-  const [selected, setSelected] = useState<BeaconResult | null>(null);
+  const [beacons, setBeacons] = useState<Beacon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  const [selected, setSelected] = useState<Beacon | null>(null);
   const [search, setSearch] = useState('');
   const [minScore, setMinScore] = useState(0);
 
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const safeFetch = async (url: string) => {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+          return res.json();
+        };
+
+        const [data] = await Promise.all([
+          safeFetch(`${API_BASE}/api/v1/hunt/beacons`) as Promise<BeaconsResponse>,
+        ]);
+
+        const rows = (data?.beacons || []).map((b) => ({
+          ...b,
+          id: `${b.src_ip}-${b.dst_ip}-${b.dst_port}`,
+        }));
+        setBeacons(rows);
+      } catch (err) {
+        console.error('Failed to load beacons', err);
+        setError(err instanceof Error ? err.message : 'Failed to load beacons');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
-    let data = [...mockBeacons].sort((a, b) => b.beacon_score - a.beacon_score);
+    let data = [...beacons].sort((a, b) => b.beacon_score - a.beacon_score);
     if (minScore > 0) data = data.filter((b) => b.beacon_score >= minScore);
     if (search) {
       const q = search.toLowerCase();
@@ -246,10 +310,30 @@ const Beacons: React.FC = () => {
       );
     }
     return data;
-  }, [search, minScore]);
+  }, [beacons, search, minScore]);
+
+  if (loading) {
+    return <LoadingSkeleton rows={8} />;
+  }
 
   return (
     <div>
+      {error && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '10px 14px',
+            borderRadius: 6,
+            background: 'rgba(220, 38, 38, 0.08)',
+            border: '1px solid rgba(220, 38, 38, 0.3)',
+            color: '#DC2626',
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       <div style={{ marginBottom: 24 }}>
         <h1 className="v3-heading" style={{ fontSize: 22, margin: 0 }}>Beacon Analysis</h1>
         <p className="v3-text-secondary" style={{ fontSize: 13, marginTop: 4 }}>

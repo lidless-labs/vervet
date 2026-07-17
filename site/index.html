@@ -174,7 +174,7 @@ footer a{color:var(--dim)}
     <a href="#how">How it works</a>
     <a href="#detect">Detections</a>
     <a href="#quickstart">Quickstart</a>
-    <a href="https://github.com/solomonneas/vervet">GitHub</a>
+    <a href="https://github.com/lidless-labs/vervet">GitHub</a>
   </nav>
 </header>
 
@@ -183,9 +183,8 @@ footer a{color:var(--dim)}
     <h1>See the threats <span class="alt">hiding</span> in your logs.</h1>
     <p class="sub">Vervet reads your <b>Zeek and Suricata</b> logs and tells you which hosts are compromised and <b>why</b>. Beacons, DNS tunneling, lateral movement, scored per host with the evidence chain and the <b>MITRE ATT&amp;CK</b> techniques behind it.</p>
     <div class="cta">
-      <a class="btn primary" href="https://demo.vervet.dev">&#9654; Live demo</a>
-      <a class="btn" href="#quickstart">Quickstart</a>
-      <a class="btn" href="https://github.com/solomonneas/vervet">GitHub</a>
+      <a class="btn primary" href="#quickstart">&#9654; Quickstart</a>
+      <a class="btn" href="https://github.com/lidless-labs/vervet">GitHub</a>
     </div>
     <p class="hero-note">Open source. Apache-2.0. Runs on your hardware. Reads your logs, never touches your network.</p>
   </div>
@@ -266,18 +265,18 @@ loaded 2,534 conns · 25 dns · 6 alerts</span>
 <section id="quickstart">
   <p class="kicker">Quickstart</p>
   <h2>One command to a populated dashboard.</h2>
-  <div class="qs"><pre><span class="p">$</span> <span class="cmd">git clone https://github.com/solomonneas/vervet.git</span>
+  <div class="qs"><pre><span class="p">$</span> <span class="cmd">git clone https://github.com/lidless-labs/vervet.git</span>
 <span class="p">$</span> <span class="cmd">cd vervet &amp;&amp; docker compose up -d --build</span>
 <span class="out"># open http://localhost:8000  - demo data is seeded on startup</span>
 
 <span class="out"># point it at your own logs instead:</span>
 <span class="p">$</span> <span class="cmd">docker compose run --rm -e VERVET_DEMO_MODE=false -v /var/log/zeek:/logs:ro vervet</span></pre></div>
-  <p class="hero-note" style="margin-top:14px">Apache-2.0. Source, demo, and issues on <a href="https://github.com/solomonneas/vervet">GitHub</a>.</p>
+  <p class="hero-note" style="margin-top:14px">Apache-2.0. Source, demo, and issues on <a href="https://github.com/lidless-labs/vervet">GitHub</a>.</p>
 </section>
 
 <footer>
   <span>Vervet. Apache-2.0. Built by <a href="https://solomonneas.dev">Solomon Neas</a>.</span>
-  <span><a href="https://github.com/solomonneas/vervet">github.com/solomonneas/vervet</a></span>
+  <span><a href="https://github.com/lidless-labs/vervet">github.com/lidless-labs/vervet</a></span>
 </footer>
 
 </div>

@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     log_root: str | None = None
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
     demo_mode: bool = False
+    # When set (e.g. VERVET_DATA_DIR=/data on a mounted volume), ingested logs are
+    # persisted to <data_dir>/vervet.db and reloaded on startup so they survive a
+    # restart. Unset (the default) keeps the store in-memory only. Demo mode never
+    # persists (its sample data is re-seeded on every boot).
+    data_dir: str | None = None
     cases_dir: str = "data/cases"
     max_file_size: int = 100 * 1024 * 1024
     chunk_size: int = 8192
