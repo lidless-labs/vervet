@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import uuid4
 
+from api.services.evidence_summary import IMPACTS, RESOLUTIONS, VERDICTS, clean_summary, summarize_hits
+
 
 class CaseManager:
     """File-backed case management service."""
@@ -18,6 +20,8 @@ class CaseManager:
     VALID_SEVERITY = {"low", "medium", "high", "critical"}
     VALID_FINDING_TYPES = {"connection", "dns", "alert", "rule_match", "manual"}
     VALID_IOC_TYPES = {"ip", "domain", "hash", "url"}
+    VALID_VERDICTS = VERDICTS
+    CLOSED_STATUSES = {"resolved", "closed"}
 
     def __init__(self, cases_dir: Optional[Path] = None):
         base_dir = Path(__file__).resolve().parents[2]
@@ -85,6 +89,16 @@ class CaseManager:
             cases.append(case)
         return cases
 
+    @staticmethod
+    def _validate_closeout(payload: dict[str, Any]) -> None:
+        for field, vocabulary in (("resolution", RESOLUTIONS), ("impact", IMPACTS)):
+            value = payload.get(field)
+            if value is not None and (not isinstance(value, str) or value not in vocabulary):
+                raise ValueError(f"Invalid {field}: {value}")
+        summary = payload.get("summary")
+        if summary is not None and (not isinstance(summary, str) or len(summary) > 8192):
+            raise ValueError("Summary must be null or a string of at most 8192 characters")
+
     def create_case(self, payload: dict[str, Any]) -> dict[str, Any]:
         status = payload.get("status", "open")
         severity = payload.get("severity", "medium")
@@ -93,6 +107,7 @@ class CaseManager:
         if severity not in self.VALID_SEVERITY:
             raise ValueError(f"Invalid severity: {severity}")
 
+        self._validate_closeout(payload)
         now = self._now_iso()
         case = {
             "id": str(uuid4()),
@@ -104,6 +119,10 @@ class CaseManager:
             "tags": payload.get("tags", []),
             "created_at": now,
             "updated_at": now,
+            "closed_at": now if status in self.CLOSED_STATUSES else None,
+            "resolution": payload.get("resolution"),
+            "impact": payload.get("impact"),
+            "summary": payload.get("summary"),
             "findings": [],
             "notes": [],
             "timeline": [],
@@ -121,6 +140,7 @@ class CaseManager:
     def update_case(self, case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         case = self._read_case(case_id)
         previous_status = case.get("status")
+        self._validate_closeout(payload)
 
         for field in [
             "title",
@@ -132,6 +152,9 @@ class CaseManager:
             "related_connections",
             "related_rules",
             "attachments",
+            "resolution",
+            "impact",
+            "summary",
         ]:
             if field in payload:
                 case[field] = payload[field]
@@ -142,6 +165,11 @@ class CaseManager:
             raise ValueError(f"Invalid severity: {case.get('severity')}")
 
         if previous_status != case.get("status"):
+            if case.get("status") in self.CLOSED_STATUSES:
+                if previous_status not in self.CLOSED_STATUSES:
+                    case["closed_at"] = self._now_iso()
+            else:
+                case["closed_at"] = None
             self._append_timeline(
                 case,
                 "status_changed",
@@ -170,6 +198,9 @@ class CaseManager:
             "data": payload.get("data", {}),
             "added_at": self._now_iso(),
         }
+        for field in ("related_connection_uid", "related_rule_id", "observed_at"):
+            if field in payload:
+                finding[field] = payload[field]
         case["findings"].append(finding)
 
         uid = payload.get("related_connection_uid")
@@ -221,18 +252,46 @@ class CaseManager:
         if ioc_type not in self.VALID_IOC_TYPES:
             raise ValueError(f"Invalid IOC type: {ioc_type}")
 
+        verdict = payload.get("verdict", "unknown")
+        if not isinstance(verdict, str) or verdict not in self.VALID_VERDICTS:
+            raise ValueError(f"Invalid verdict: {verdict}")
+
         ioc = {
             "id": str(uuid4()),
             "type": ioc_type,
             "value": payload["value"],
             "source": payload.get("source", "manual"),
-            "verdict": payload.get("verdict", "unknown"),
+            "verdict": verdict,
             "added_at": self._now_iso(),
         }
+        for field in ("ref", "observed_at", "related_connection_uid"):
+            if field in payload:
+                ioc[field] = payload[field]
         case["iocs"].append(ioc)
         self._append_timeline(case, "ioc_added", f"IOC added: {ioc['type']} {ioc['value']}")
         self._write_case(case)
         return ioc
+
+    def persist_ioc_enrichment(
+        self, case_id: str, ioc_id: str, provider: str, hits: list[Any], count: int,
+    ) -> None:
+        case = self._read_case(case_id)
+        ioc = next((item for item in case.get("iocs", []) if item.get("id") == ioc_id), None)
+        if ioc is None:
+            raise FileNotFoundError(f"IOC not found: {ioc_id}")
+        summary = summarize_hits(provider, hits, count, self._now_iso())
+        if summary is None:
+            raise ValueError("Invalid provider summary")
+        # One latest query summary per provider and stable case IOC identity.
+        stored = ioc.get("enrichment", [])
+        existing = {}
+        for item in stored[:64] if isinstance(stored, list) else []:
+            cleaned = clean_summary(item)
+            if cleaned:
+                existing[cleaned["provider"]] = cleaned
+        existing[provider] = summary
+        ioc["enrichment"] = list(existing.values())
+        self._write_case(case)
 
     def get_timeline(self, case_id: str) -> list[dict[str, Any]]:
         case = self._read_case(case_id)

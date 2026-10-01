@@ -1,0 +1,137 @@
+{
+  "format": "evidence-record",
+  "format_version": "1",
+  "generator": {
+    "name": "vervet",
+    "version": "0.2.0"
+  },
+  "exported_at": "2026-10-01T17:50:05.848865+00:00",
+  "subject": {
+    "kind": "case",
+    "id": "63819af6-7543-462d-b1df-7ea419006b1d",
+    "title": "Sanitized beacon investigation"
+  },
+  "records": [
+    {
+      "id": "32dda3b0-3e86-457c-8521-c5e9373fd108",
+      "source": {
+        "tool": "connection",
+        "observed_at": "2026-09-29T10:00:00Z",
+        "ref": "C-example-flow",
+        "raw": {
+          "type": "connection",
+          "summary": "Periodic callbacks in imported logs",
+          "severity": "medium",
+          "mitre_techniques": [
+            "T1071.001"
+          ]
+        }
+      },
+      "enrichment": [
+        {
+          "kind": "attack",
+          "provider": "vervet",
+          "value": {
+            "technique_ids": [
+              "T1071.001"
+            ]
+          },
+          "at": null
+        }
+      ],
+      "decision": {
+        "verdict": "suspicious",
+        "rationale": "Stored annotation confirms suspicious periodic callbacks",
+        "by": "reviewer",
+        "at": "2026-10-01T17:50:05.839146+00:00"
+      }
+    },
+    {
+      "id": "77ef6bd8-a791-4723-9643-a05613196800",
+      "source": {
+        "tool": "rule_match",
+        "observed_at": null,
+        "ref": "rule-example-1",
+        "raw": {
+          "type": "rule_match",
+          "summary": "Rule match in imported logs",
+          "severity": "medium"
+        }
+      },
+      "enrichment": [],
+      "decision": null
+    },
+    {
+      "id": "239d3645-4b28-447a-af6e-50bef95f0694",
+      "source": {
+        "tool": "alert",
+        "observed_at": null,
+        "ref": "alert-example-native",
+        "raw": {
+          "type": "ip",
+          "value": "203.0.113.4"
+        }
+      },
+      "enrichment": [
+        {
+          "kind": "ti",
+          "provider": "misp",
+          "value": {
+            "hit_count": 1,
+            "refs": [
+              "misp-attribute-example"
+            ],
+            "observed_at": "2026-09-29T10:00:00+00:00"
+          },
+          "at": "2026-10-01T17:50:05.840705+00:00"
+        },
+        {
+          "kind": "attack",
+          "provider": "misp",
+          "value": {
+            "technique_ids": [
+              "T1071.001"
+            ]
+          },
+          "at": "2026-10-01T17:50:05.840705+00:00"
+        },
+        {
+          "kind": "ti",
+          "provider": "wazuh",
+          "value": {
+            "hit_count": 1,
+            "refs": [
+              "wazuh-alert-example"
+            ],
+            "observed_at": "2026-09-29T10:15:00Z"
+          },
+          "at": "2026-10-01T17:50:05.843799+00:00"
+        },
+        {
+          "kind": "attack",
+          "provider": "wazuh",
+          "value": {
+            "technique_ids": [
+              "T1059.001"
+            ]
+          },
+          "at": "2026-10-01T17:50:05.843799+00:00"
+        }
+      ],
+      "decision": {
+        "verdict": "suspicious",
+        "rationale": null,
+        "by": null,
+        "at": null
+      }
+    }
+  ],
+  "closeout": {
+    "status": "closed",
+    "resolution": "TruePositive",
+    "impact": "NoImpact",
+    "summary": "Sanitized mock investigation completed",
+    "closed_at": "2026-10-01T17:50:05.846776+00:00",
+    "closed_by": "case-owner"
+  }
+}

@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from api.config import settings
+from api.services.annotations import annotations_service
 from api.services.case_manager import CaseManager
+from api.services.evidence_summary import IMPACTS, RESOLUTIONS, VERDICTS, clean_summary, technique_ids, timestamp, timestamp_key
 
 
 class BundleExporter:
@@ -15,6 +18,127 @@ class BundleExporter:
 
     def __init__(self, case_manager: CaseManager):
         self.case_manager = case_manager
+
+    @staticmethod
+    def _text(value: Any, limit: int = 1024, *, empty: bool = False) -> str | None:
+        if isinstance(value, str) and len(value) <= limit and (value or empty):
+            return value
+        return None
+
+    def _decision(self, item: dict[str, Any], *, is_ioc: bool) -> dict[str, Any] | None:
+        targets = []
+        uid = self._text(item.get("related_connection_uid"))
+        if uid:
+            targets.append(("connection", uid))
+        if is_ioc and item.get("type") == "ip" and self._text(item.get("value")):
+            targets.append(("host", item["value"]))
+        if item.get("type") in annotations_service.VALID_TARGET_TYPES and self._text(item.get("id")):
+            targets.append((item["type"], item["id"]))
+        annotations = [
+            annotation for target_type, target_id in targets
+            for annotation in annotations_service.list_by_target(target_type, target_id)
+            if isinstance(annotation.get("verdict"), str) and annotation["verdict"] in VERDICTS
+        ]
+        def annotation_instant(annotation: dict[str, Any]) -> tuple[int, int, int]:
+            time = timestamp(annotation.get("updated_at")) or timestamp(annotation.get("created_at"))
+            return timestamp_key(time)
+
+        annotations.sort(key=annotation_instant)
+        verdict = item.get("verdict")
+        if not isinstance(verdict, str) or verdict not in VERDICTS:
+            verdict = None
+        # An IOC's stored verdict remains its decision. Only an annotation with
+        # the same verdict supplies attribution for that decision.
+        if is_ioc:
+            annotations = [a for a in annotations if a["verdict"] == verdict]
+        annotation = annotations[-1] if annotations else None
+        if not is_ioc and annotation:
+            verdict = annotation["verdict"]
+        if verdict is None:
+            return None
+        return {
+            "verdict": verdict,
+            "rationale": self._text(annotation.get("content"), 8192, empty=True) if annotation else None,
+            "by": self._text(annotation.get("author")) if annotation else None,
+            "at": (timestamp(annotation.get("updated_at")) or timestamp(annotation.get("created_at"))) if annotation else None,
+        }
+
+    def _evidence_record(self, item: dict[str, Any], *, is_ioc: bool) -> dict[str, Any]:
+        identity = self._text(item.get("id"))
+        if identity is None:
+            raise ValueError("Evidence item has no bounded identity")
+        data = item.get("data") if isinstance(item.get("data"), dict) else {}
+        tool = self._text(item.get("source") if is_ioc else item.get("type")) or "vervet"
+        ref = self._text(item.get("related_connection_uid")) or self._text(item.get("related_rule_id")) or self._text(item.get("ref"))
+        raw = {}
+        for field in (("type", "value") if is_ioc else ("type", "summary", "severity")):
+            value = self._text(item.get(field), 8192, empty=True)
+            if value is not None:
+                raw[field] = value
+        mappings = data.get("mitre_techniques")
+        # Retain the bounded original mapping facts separately from normalized
+        # technique_ids. Other finding/provider data is not copied into raw.
+        if isinstance(mappings, list) and len(mappings) <= 64 and all(self._text(t) is not None for t in mappings):
+            raw["mitre_techniques"] = mappings
+        enrichments = []
+        techniques = technique_ids(mappings)
+        if techniques:
+            enrichments.append({"kind": "attack", "provider": "vervet", "value": {"technique_ids": techniques}, "at": None})
+        stored = item.get("enrichment", [])
+        summaries = {}
+        for value in stored[:64] if isinstance(stored, list) else []:
+            summary = clean_summary(value)
+            if summary:
+                summaries[summary["provider"]] = summary
+        for summary in summaries.values():
+            enrichments.append({
+                "kind": "ti", "provider": summary["provider"],
+                "value": {key: summary[key] for key in ("hit_count", "refs", "observed_at")},
+                "at": summary["at"],
+            })
+            if summary["mitre_techniques"]:
+                enrichments.append({
+                    "kind": "attack", "provider": summary["provider"],
+                    "value": {"technique_ids": summary["mitre_techniques"]}, "at": summary["at"],
+                })
+        return {
+            "id": identity,
+            "source": {"tool": tool, "observed_at": timestamp(item.get("observed_at")), "ref": ref, "raw": raw or None},
+            "enrichment": enrichments,
+            "decision": self._decision(item, is_ioc=is_ioc),
+        }
+
+    def export_evidence_record(self, case_id: str) -> dict[str, Any]:
+        """Project stored case facts. References are opaque and never fetched."""
+        case = self.case_manager.get_case(case_id)
+        identity, title = self._text(case.get("id")), self._text(case.get("title"))
+        if identity is None or title is None:
+            raise ValueError("Case identity and title must be nonempty strings up to 1024 characters")
+        findings, iocs = case.get("findings", []), case.get("iocs", [])
+        if not isinstance(findings, list) or not isinstance(iocs, list) or len(findings) + len(iocs) > 10000:
+            raise ValueError("Evidence export requires at most 10000 findings and IOCs")
+        if any(not isinstance(item, dict) for item in findings + iocs):
+            raise ValueError("Malformed case evidence item")
+        resolution, impact = case.get("resolution"), case.get("impact")
+        closed = case.get("status") in CaseManager.CLOSED_STATUSES
+        result = {
+            "format": "evidence-record", "format_version": "1",
+            "generator": {"name": "vervet", "version": self._text(settings.app_version)},
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "subject": {"kind": "case", "id": identity, "title": title},
+            "records": [self._evidence_record(item, is_ioc=False) for item in findings] + [self._evidence_record(item, is_ioc=True) for item in iocs],
+            "closeout": {
+                "status": "closed" if closed else "open",
+                "resolution": resolution if isinstance(resolution, str) and resolution in RESOLUTIONS else None,
+                "impact": impact if isinstance(impact, str) and impact in IMPACTS else None,
+                "summary": self._text(case.get("summary"), 8192, empty=True),
+                "closed_at": timestamp(case.get("closed_at")) if closed else None,
+                "closed_by": self._text(case.get("assignee")),
+            },
+        }
+        if len(json.dumps(result, ensure_ascii=False).encode("utf-8")) > 4 * 1024 * 1024:
+            raise ValueError("Evidence export exceeds 4 MiB")
+        return result
 
     def export_json(self, case_id: str) -> dict[str, Any]:
         case = self.case_manager.get_case(case_id)
