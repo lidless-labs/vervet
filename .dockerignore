@@ -1,0 +1,29 @@
+# Version control / tooling
+.git
+.gitignore
+.github
+.claude
+.brigade
+.graphtrail
+.wrangler
+memory
+
+# Node / Python build artifacts (rebuilt inside the image)
+node_modules
+web/node_modules
+web/dist
+dist
+**/__pycache__
+*.pyc
+.pytest_cache
+.venv
+venv
+
+# Docs / marketing / local files not needed by the app image
+site
+docs
+specs
+fixtures
+*.md
+CLAUDE.md
+AGENTS.md

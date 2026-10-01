@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://vervet.dev"><strong>Website</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://demo.vervet.dev">Live demo</a>
+  <a href="#install">Quickstart</a>
 </p>
 
 <p align="center">
@@ -31,8 +31,8 @@ Point Vervet at a directory of Zeek and Suricata logs and it surfaces the threat
 Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and want the analyst layer that hunts the logs for them, the way RITA and AC-Hunter do for beaconing, but UI-first, MITRE-mapped, and speaking both sensors.
 
 <p align="center">
-  <strong>▶ Try the live demo: <a href="https://demo.vervet.dev">demo.vervet.dev</a></strong><br>
-  <sub>No install. Real (sanitized) traffic with a C2 beacon and DNS tunnel already detected.</sub>
+  <strong>▶ Try the demo in one command: <a href="#install"><code>docker compose up -d --build</code></a></strong><br>
+  <sub>Boots the full UI on sanitized traffic with a C2 beacon and DNS tunnel already detected, at <code>http://localhost:8000</code>.</sub>
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@ Vervet is for blue teams, SOC analysts, and MSSPs who run Zeek or Suricata and w
 
 <p align="center">
   <img src="docs/assets/screenshots/threats.png" width="49%" alt="Per-host threat scoring mapped to MITRE ATT&CK by tactic">
-  <img src="docs/assets/screenshots/dashboard.png" width="49%" alt="SOC dashboard overview">
+  <img src="docs/assets/screenshots/dns.png" width="49%" alt="DNS threat detection: tunneling, DGA, and suspicious query patterns">
 </p>
 
 <p align="center"><sub>Demo data: real Zeek logs (sanitized) with a synthetic C2 beacon and DNS-tunnel scenario layered in. Every address is an RFC 5737 / RFC 2544 documentation range.</sub></p>

@@ -104,6 +104,9 @@ export const BeaconScatter: React.FC<BeaconScatterProps> = ({
           type="number"
           dataKey="x"
           name="Interval (s)"
+          domain={[0, 'dataMax + 20']}
+          allowDecimals={false}
+          tickFormatter={(v: number) => `${Math.round(v)}`}
           tick={{ fill: theme.colors.textSecondary, fontSize: theme.fonts.sizeSmall }}
           label={{
             value: 'Avg Interval (s)',
@@ -139,18 +142,21 @@ export const BeaconScatter: React.FC<BeaconScatterProps> = ({
           data={highThreats}
           fill={theme.colors.danger}
           fillOpacity={0.7}
+          isAnimationActive={false}
         />
         <Scatter
           name="Medium (65-84)"
           data={mediumThreats}
           fill={theme.colors.warning}
           fillOpacity={0.7}
+          isAnimationActive={false}
         />
         <Scatter
           name="Low (<65)"
           data={lowThreats}
           fill={theme.colors.success}
           fillOpacity={0.7}
+          isAnimationActive={false}
         />
       </ScatterChart>
     </ResponsiveContainer>
