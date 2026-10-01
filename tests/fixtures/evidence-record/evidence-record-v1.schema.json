@@ -1,0 +1,531 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-record:1",
+  "title": "Evidence record v1",
+  "type": "object",
+  "required": [
+    "format",
+    "format_version",
+    "generator",
+    "exported_at",
+    "subject",
+    "records",
+    "closeout"
+  ],
+  "properties": {
+    "format": {
+      "const": "evidence-record"
+    },
+    "format_version": {
+      "const": "1"
+    },
+    "generator": {
+      "$ref": "#/$defs/generator"
+    },
+    "exported_at": {
+      "$ref": "#/$defs/time"
+    },
+    "subject": {
+      "$ref": "#/$defs/subject"
+    },
+    "records": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "closeout": {
+      "$ref": "#/$defs/closeout"
+    }
+  },
+  "maxProperties": 64,
+  "propertyNames": {
+    "maxLength": 128
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/json4"
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "nullableText": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 8192
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}[Tt](?:[01]\\d|2[0-3]):[0-5]\\d:(?:[0-5]\\d|60)(?:\\.\\d+)?(?:[Zz]|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$"
+    },
+    "nullableTime": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "json0": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ],
+      "maxLength": 8192,
+      "minimum": -1e+308,
+      "maximum": 1e+308
+    },
+    "json1": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ],
+          "maxLength": 8192,
+          "minimum": -1e+308,
+          "maximum": 1e+308
+        },
+        {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/json0"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json0"
+          }
+        }
+      ]
+    },
+    "json2": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ],
+          "maxLength": 8192,
+          "minimum": -1e+308,
+          "maximum": 1e+308
+        },
+        {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/json1"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json1"
+          }
+        }
+      ]
+    },
+    "json3": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ],
+          "maxLength": 8192,
+          "minimum": -1e+308,
+          "maximum": 1e+308
+        },
+        {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/json2"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json2"
+          }
+        }
+      ]
+    },
+    "json4": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ],
+          "maxLength": 8192,
+          "minimum": -1e+308,
+          "maximum": 1e+308
+        },
+        {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/json3"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json3"
+          }
+        }
+      ]
+    },
+    "raw": {
+      "anyOf": [
+        {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json3"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "generator": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "version": {
+          "$ref": "#/$defs/nullableText"
+        }
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/json4"
+      }
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id",
+        "title"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "case",
+            "run",
+            "project"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/text"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/json4"
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "tool",
+        "observed_at",
+        "ref",
+        "raw"
+      ],
+      "properties": {
+        "tool": {
+          "$ref": "#/$defs/text"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/nullableTime"
+        },
+        "ref": {
+          "$ref": "#/$defs/nullableText"
+        },
+        "raw": {
+          "$ref": "#/$defs/raw"
+        }
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/json4"
+      }
+    },
+    "enrichment": {
+      "type": "object",
+      "required": [
+        "kind",
+        "provider",
+        "value",
+        "at"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "attack",
+            "ti",
+            "score"
+          ]
+        },
+        "provider": {
+          "$ref": "#/$defs/text"
+        },
+        "value": {
+          "$ref": "#/$defs/json4"
+        },
+        "at": {
+          "$ref": "#/$defs/nullableTime"
+        }
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/json4"
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "attack"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "technique_ids": {
+                        "type": "array",
+                        "maxItems": 64,
+                        "uniqueItems": true,
+                        "items": {
+                          "type": "string",
+                          "pattern": "^T[0-9]{4}(?:\\.[0-9]{3})?$"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "decision": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "verdict",
+            "rationale",
+            "by",
+            "at"
+          ],
+          "properties": {
+            "verdict": {
+              "enum": [
+                "benign",
+                "suspicious",
+                "malicious",
+                "false-positive",
+                "unknown"
+              ]
+            },
+            "rationale": {
+              "$ref": "#/$defs/rationale"
+            },
+            "by": {
+              "$ref": "#/$defs/nullableText"
+            },
+            "at": {
+              "$ref": "#/$defs/nullableTime"
+            }
+          },
+          "maxProperties": 64,
+          "propertyNames": {
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/json4"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "id",
+        "source",
+        "enrichment",
+        "decision"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/text"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "enrichment": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/enrichment"
+          }
+        },
+        "decision": {
+          "$ref": "#/$defs/decision"
+        }
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/json4"
+      }
+    },
+    "closeout": {
+      "type": "object",
+      "required": [
+        "status",
+        "resolution",
+        "impact",
+        "summary",
+        "closed_at",
+        "closed_by"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "open",
+            "closed"
+          ]
+        },
+        "resolution": {
+          "enum": [
+            "TruePositive",
+            "FalsePositive",
+            "Indeterminate",
+            "Duplicated",
+            "Other",
+            null
+          ]
+        },
+        "impact": {
+          "enum": [
+            "NoImpact",
+            "WithImpact",
+            "NotApplicable",
+            null
+          ]
+        },
+        "summary": {
+          "$ref": "#/$defs/rationale"
+        },
+        "closed_at": {
+          "$ref": "#/$defs/nullableTime"
+        },
+        "closed_by": {
+          "$ref": "#/$defs/nullableText"
+        }
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/json4"
+      }
+    }
+  }
+}

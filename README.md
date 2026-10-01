@@ -103,6 +103,16 @@ npm install && npm run dev
 
 `make dev` starts both at once. See the [Makefile](Makefile) for individual targets.
 
+To run the backend tests, install the test dependencies:
+
+```bash
+pip install -r requirements-test.txt
+python -m pytest -q
+```
+
+`requirements-test.txt` includes the existing backend requirements and the
+pinned evidence-record schema validator. Docker installs `requirements.txt`.
+
 ## What it detects
 
 | Detection | What it finds | Maps to |

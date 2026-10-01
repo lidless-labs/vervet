@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Evidence-record schema validation (test-only)
+jsonschema==4.23.0

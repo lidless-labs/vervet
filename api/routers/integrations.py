@@ -107,6 +107,7 @@ async def correlate_case_iocs_with_wazuh(
         try:
             payload = client.search_alerts_for_ioc(value, limit=limit_per_ioc)
             hit_count, hit_items = normalize_wazuh_hits(payload)
+            case_manager.persist_ioc_enrichment(case_id, ioc["id"], "wazuh", hit_items, hit_count)
         except RuntimeError as e:
             raise HTTPException(status_code=502, detail=str(e)) from e
 
@@ -175,6 +176,7 @@ async def enrich_case_iocs_with_misp(
         try:
             payload = client.search_attribute(value, limit=limit_per_ioc)
             hit_count, hit_items = normalize_misp_hits(payload)
+            case_manager.persist_ioc_enrichment(case_id, ioc["id"], "misp", hit_items, hit_count)
         except RuntimeError as e:
             raise HTTPException(status_code=502, detail=str(e)) from e
 

@@ -12,14 +12,18 @@ router = APIRouter()
 
 
 @router.post("/{case_id}/export")
-async def export_case_bundle(case_id: str, format: str = Query(default="json", pattern="^(json|html|stix)$")):
+async def export_case_bundle(case_id: str, format: str = Query(default="json", pattern="^(json|html|stix|evidence-record)$")):
     try:
+        if format == "evidence-record":
+            return bundle_exporter.export_evidence_record(case_id)
         if format == "json":
             return bundle_exporter.export_json(case_id)
         if format == "stix":
             return bundle_exporter.export_stix(case_id)
         html_content = bundle_exporter.export_html(case_id)
         return HTMLResponse(content=html_content)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
