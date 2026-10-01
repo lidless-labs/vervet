@@ -30,7 +30,9 @@ IOC decisions use their stored valid verdict. Finding decisions can use actual
 matching annotations. An IOC annotation supplies attribution only when its
 verdict matches the IOC's stored verdict. Annotation matching uses explicit
 connection linkage, an exact supported entity type and ID, or an IP IOC's exact
-host target. The latest matching decision is chosen by aware instant across time
+host target. Each evidence export reads annotations once and indexes them by
+target type and ID. Later exports read a fresh snapshot. The latest matching
+decision is chosen by aware instant across time
 zone offsets. Author, annotation time, and rationale come from that annotation.
 Absent attribution stays null. A missing or invalid legacy verdict yields a null
 decision. Supported verdicts are `benign`, `suspicious`, `malicious`,
@@ -91,5 +93,7 @@ a stored annotation, and structured closeout facts for Intel Workbench import.
 
 Tests use the pinned test-only `jsonschema==4.23.0` with Draft202012Validator and
 an explicitly registered RFC3339 FormatChecker. The checker needs no optional
-format package. Production code does not import jsonschema. The regression suite
-forbids live integration requests and reference fetching.
+format package. Install `requirements-test.txt` before running
+`python -m pytest -q`. It includes the existing backend requirements and the schema validator.
+Production Docker installs `requirements.txt`, which excludes jsonschema. The
+regression suite forbids live integration requests and reference fetching.

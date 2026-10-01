@@ -25,7 +25,10 @@ class BundleExporter:
             return value
         return None
 
-    def _decision(self, item: dict[str, Any], *, is_ioc: bool) -> dict[str, Any] | None:
+    def _decision(
+        self, item: dict[str, Any], *, is_ioc: bool,
+        annotations_by_target: dict[tuple[str, str], list[dict[str, Any]]],
+    ) -> dict[str, Any] | None:
         targets = []
         uid = self._text(item.get("related_connection_uid"))
         if uid:
@@ -36,7 +39,7 @@ class BundleExporter:
             targets.append((item["type"], item["id"]))
         annotations = [
             annotation for target_type, target_id in targets
-            for annotation in annotations_service.list_by_target(target_type, target_id)
+            for annotation in annotations_by_target.get((target_type, target_id), [])
             if isinstance(annotation.get("verdict"), str) and annotation["verdict"] in VERDICTS
         ]
         def annotation_instant(annotation: dict[str, Any]) -> tuple[int, int, int]:
@@ -63,7 +66,10 @@ class BundleExporter:
             "at": (timestamp(annotation.get("updated_at")) or timestamp(annotation.get("created_at"))) if annotation else None,
         }
 
-    def _evidence_record(self, item: dict[str, Any], *, is_ioc: bool) -> dict[str, Any]:
+    def _evidence_record(
+        self, item: dict[str, Any], *, is_ioc: bool,
+        annotations_by_target: dict[tuple[str, str], list[dict[str, Any]]],
+    ) -> dict[str, Any]:
         identity = self._text(item.get("id"))
         if identity is None:
             raise ValueError("Evidence item has no bounded identity")
@@ -105,7 +111,7 @@ class BundleExporter:
             "id": identity,
             "source": {"tool": tool, "observed_at": timestamp(item.get("observed_at")), "ref": ref, "raw": raw or None},
             "enrichment": enrichments,
-            "decision": self._decision(item, is_ioc=is_ioc),
+            "decision": self._decision(item, is_ioc=is_ioc, annotations_by_target=annotations_by_target),
         }
 
     def export_evidence_record(self, case_id: str) -> dict[str, Any]:
@@ -119,6 +125,11 @@ class BundleExporter:
             raise ValueError("Evidence export requires at most 10000 findings and IOCs")
         if any(not isinstance(item, dict) for item in findings + iocs):
             raise ValueError("Malformed case evidence item")
+        annotations_by_target: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        for annotation in annotations_service.list_all():
+            target_type, target_id = annotation.get("target_type"), annotation.get("target_id")
+            if isinstance(target_type, str) and isinstance(target_id, str):
+                annotations_by_target.setdefault((target_type, target_id), []).append(annotation)
         resolution, impact = case.get("resolution"), case.get("impact")
         closed = case.get("status") in CaseManager.CLOSED_STATUSES
         result = {
@@ -126,7 +137,13 @@ class BundleExporter:
             "generator": {"name": "vervet", "version": self._text(settings.app_version)},
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "subject": {"kind": "case", "id": identity, "title": title},
-            "records": [self._evidence_record(item, is_ioc=False) for item in findings] + [self._evidence_record(item, is_ioc=True) for item in iocs],
+            "records": [
+                self._evidence_record(item, is_ioc=False, annotations_by_target=annotations_by_target)
+                for item in findings
+            ] + [
+                self._evidence_record(item, is_ioc=True, annotations_by_target=annotations_by_target)
+                for item in iocs
+            ],
             "closeout": {
                 "status": "closed" if closed else "open",
                 "resolution": resolution if isinstance(resolution, str) and resolution in RESOLUTIONS else None,

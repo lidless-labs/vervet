@@ -291,6 +291,76 @@ def test_ioc_annotation_only_attributes_matching_verdict(manager, exporter):
     validate(payload)
 
 
+def test_multi_record_export_reads_annotations_once_and_preserves_decisions(manager, exporter, monkeypatch):
+    service, annotations = exporter
+    case = manager.create_case({'title': 'Annotation snapshot'})
+    flow = manager.add_finding(case['id'], {'type': 'connection', 'summary': 'Flow', 'related_connection_uid': 'C-shared'})
+    entity = manager.add_finding(case['id'], {'type': 'connection', 'summary': 'Entity', 'related_connection_uid': 'C-shared'})
+    unlinked = manager.add_finding(case['id'], {'type': 'rule_match', 'summary': 'Unlinked'})
+    ioc = manager.add_ioc(case['id'], {'value': '203.0.113.4', 'verdict': 'malicious', 'related_connection_uid': 'C-shared'})
+    unattributed = manager.add_ioc(case['id'], {'value': '203.0.113.5', 'verdict': 'suspicious'})
+    legacy = manager.get_case(case['id'])
+    legacy['iocs'].append({'id': 'legacy-no-verdict', 'type': 'ip', 'value': '203.0.113.4'})
+    manager._case_path(case['id']).write_text(json.dumps(legacy))
+    items = [
+        {'target_type': 'connection', 'target_id': 'C-shared', 'verdict': 'malicious',
+         'content': 'Connection confirmed', 'author': 'connection-reviewer', 'updated_at': '2026-09-29T11:00:00Z'},
+        {'target_type': 'connection', 'target_id': 'C-shared', 'verdict': 'benign',
+         'content': 'Earlier offset', 'author': 'earlier-reviewer', 'updated_at': '2026-09-29T12:00:00+02:00'},
+        {'target_type': 'connection', 'target_id': 'C-shared', 'verdict': 'invalid',
+         'content': 'Invalid verdict', 'updated_at': '2026-09-29T14:00:00Z'},
+        {'target_type': 'connection', 'target_id': entity['id'], 'verdict': 'suspicious',
+         'content': 'Exact entity target', 'author': 'entity-reviewer', 'updated_at': 'invalid', 'created_at': '2026-09-29T11:00:00Z'},
+        {'target_type': 'dns', 'target_id': entity['id'], 'verdict': 'benign',
+         'content': 'Different target type', 'updated_at': '2026-09-29T14:00:00Z'},
+        {'target_type': 'host', 'target_id': '203.0.113.4', 'verdict': 'benign',
+         'content': 'Later conflicting verdict', 'updated_at': '2026-09-29T14:00:00Z'},
+        {'target_type': 'host', 'target_id': '203.0.113.4', 'verdict': 'malicious',
+         'content': 'IOC confirmed', 'author': 'ioc-reviewer', 'updated_at': '2026-09-29T12:30:00+01:00'},
+        {'target_type': 'host', 'target_id': '203.0.113.5', 'verdict': 'benign',
+         'content': 'Unmatched verdict', 'updated_at': '2026-09-29T14:00:00Z'},
+    ]
+    annotations._write_all(items)
+    annotation_bytes = annotations.annotations_path.read_bytes()
+    read_count = 0
+    read_all = annotations._read_all
+
+    def counted_read():
+        nonlocal read_count
+        read_count += 1
+        return read_all()
+
+    monkeypatch.setattr(annotations, '_read_all', counted_read)
+    payload = service.export_evidence_record(case['id'])
+    decisions = {record['id']: record['decision'] for record in payload['records']}
+    assert decisions == {
+        flow['id']: {'verdict': 'malicious', 'rationale': 'Connection confirmed', 'by': 'connection-reviewer', 'at': '2026-09-29T11:00:00Z'},
+        entity['id']: {'verdict': 'suspicious', 'rationale': 'Exact entity target', 'by': 'entity-reviewer', 'at': '2026-09-29T11:00:00Z'},
+        unlinked['id']: None,
+        ioc['id']: {'verdict': 'malicious', 'rationale': 'IOC confirmed', 'by': 'ioc-reviewer', 'at': '2026-09-29T12:30:00+01:00'},
+        unattributed['id']: {'verdict': 'suspicious', 'rationale': None, 'by': None, 'at': None},
+        'legacy-no-verdict': None,
+    }
+    validate(payload)
+    assert read_count == 1
+    assert annotations.annotations_path.read_bytes() == annotation_bytes
+    assert manager.get_case(case['id']) == legacy
+    service.export_json(case['id'])
+    service.export_html(case['id'])
+    service.export_stix(case['id'])
+    assert read_count == 1  # Legacy exporters do not consult annotations.
+
+    # A subsequent export must take a fresh snapshot, not reuse an instance cache.
+    items[6]['content'] = 'Updated IOC rationale'
+    annotations._write_all(items)
+    refreshed = service.export_evidence_record(case['id'])
+    assert read_count == 2
+    updated = {record['id']: record['decision'] for record in refreshed['records']}
+    decisions[ioc['id']]['rationale'] = 'Updated IOC rationale'
+    assert updated == decisions
+    validate(refreshed)
+
+
 @pytest.mark.parametrize('provider', ['misp', 'wazuh'])
 def test_no_hits_and_malformed_hits_still_bounded(client, manager, exporter, monkeypatch, provider):
     case = manager.create_case({'title': 'No hits'})

@@ -26,11 +26,14 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-test.txt
       # pycairo (via xhtml2pdf -> svglib) compiles from source and needs cairo headers
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libcairo2-dev
       - name: Install Python deps
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-test.txt
       - name: Run tests
         run: python -m pytest -q
 
