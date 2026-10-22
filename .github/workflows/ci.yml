@@ -51,6 +51,25 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+  dependency-audit:
+    name: Python dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-test.txt
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libcairo2-dev
+      - name: Install audit tool
+        run: python -m pip install pip-audit==2.10.1
+      - name: Audit Python dependencies
+        run: pip-audit -r requirements.txt -r requirements-test.txt --strict
+
   docker:
     name: Docker image builds
     runs-on: ubuntu-latest
@@ -58,3 +77,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build image
         run: docker build -t vervet:ci .
+      - name: Check container runtime
+        run: python3 tests/check_container.py vervet:ci
