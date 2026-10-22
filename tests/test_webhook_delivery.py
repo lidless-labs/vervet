@@ -53,7 +53,8 @@ def delivery(monkeypatch, tmp_path):
         requests.append(request)
         if response.get("delay"):
             await asyncio.sleep(response["delay"])
-        if response.get("error") or len(requests) > response.get("error_after", float("inf")):
+        if (response.get("error") or request.url.host in response.get("fail_hosts", ())
+                or len(requests) > response.get("error_after", float("inf"))):
             raise httpx.ConnectError("example transport detail")
         stream = Chunks(response["chunks"])
         response["stream"] = stream
@@ -155,6 +156,19 @@ async def test_last_attempt_does_not_retain_an_earlier_response_code(delivery):
     assert record.error == "Webhook delivery failed"
     assert record.response_code is None
     assert len(requests) == 3
+
+
+@pytest.mark.asyncio
+async def test_retries_move_to_the_next_validated_address(delivery):
+    manager, config, requests, resolutions, answers, response = delivery
+    other = str(ipaddress.IPv4Address(0x08080404))
+    answers[:] = [GLOBAL_IP, GLOBAL_IP, other]
+    response["fail_hosts"] = {GLOBAL_IP}
+    record = await manager.send_webhook(config, {})
+    assert record.status == "success"
+    assert [request.url.host for request in requests] == [GLOBAL_IP, other]
+    assert all(request.headers["host"] == "example.com" for request in requests)
+    assert len(resolutions) == 1
 
 
 @pytest.mark.asyncio

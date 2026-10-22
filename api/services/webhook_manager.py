@@ -170,7 +170,7 @@ class WebhookManager:
             raise ValueError("Invalid webhook URL") from None
 
     @staticmethod
-    async def _resolve_destination(url: httpx.URL) -> str:
+    async def _resolve_destination(url: httpx.URL) -> list[str]:
         """Require every answer to satisfy the global-address policy."""
         host = url.raw_host.decode("ascii")
         try:
@@ -189,7 +189,7 @@ class WebhookManager:
             not address.is_global or address.is_multicast for address in addresses
         ):
             raise ValueError("Invalid webhook destination")
-        return str(addresses[0])
+        return list(dict.fromkeys(str(address) for address in addresses))
 
     @staticmethod
     def _encode_payload(payload: dict) -> bytes:
@@ -217,14 +217,17 @@ class WebhookManager:
                 else:
                     body = raw_payload
                 url = self._parse_url(config.url)
-                address = await self._resolve_destination(url)
-                # The transport connects to this address for every attempt.
-                # Host and TLS verification continue to use the URL authority.
+                addresses = await self._resolve_destination(url)
+                # The transport connects only to a validated address. Each attempt
+                # moves to the next one, so an unreachable answer does not fail
+                # the delivery. Host and TLS verification use the URL authority.
+                transport = _PinnedTransport(addresses[0])
                 async with httpx.AsyncClient(
-                    transport=_PinnedTransport(address), timeout=ATTEMPT_TIMEOUT,
+                    transport=transport, timeout=ATTEMPT_TIMEOUT,
                     follow_redirects=False, trust_env=False,
                 ) as client:
                     for attempt in range(3):
+                        transport.address = addresses[attempt % len(addresses)]
                         record.response_code = None
                         try:
                             async with asyncio.timeout(ATTEMPT_TIMEOUT):
