@@ -15,7 +15,7 @@ Vervet is a full-stack network threat hunting platform. The frontend provides in
 
 ### Backend
 - **FastAPI** with async/await for high-concurrency REST APIs
-- **Python 3.9+** for data processing and threat analysis
+- **Python 3.12+** for data processing and threat analysis
 - **Pydantic** for request/response validation
 - Runs on **port 8000**
 

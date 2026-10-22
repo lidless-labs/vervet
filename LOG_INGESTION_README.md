@@ -355,10 +355,10 @@ Potential improvements:
 ## Dependencies
 
 Core dependencies (see `requirements.txt`):
-- `fastapi==0.109.0` - Web framework
-- `pydantic==2.5.3` - Data validation
-- `python-dateutil==2.8.2` - Timestamp parsing
-- `pytest==7.4.4` - Testing
+- `fastapi==0.159.1` - Web framework
+- `pydantic==2.14.1` - Data validation
+- `python-dateutil==3.0.0` - Timestamp parsing
+- `pytest==9.1.1` - Testing
 
 ## Implementation Checklist
 
