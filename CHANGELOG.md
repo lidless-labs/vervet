@@ -3,6 +3,23 @@
 All notable changes to Vervet are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Refresh the Python dependency pins for Python 3.12, including FastAPI,
+  multipart parsing, Pydantic, Uvicorn, NumPy 2, pandas 3, dateutil 3,
+  xhtml2pdf, and the test dependencies. Keep the API manifest in sync.
+- Python 3.12 is now the minimum supported version, matching NumPy's floor
+  and the existing container and CI runtime.
+- Updated framework defaults enforce multipart field-size and header bounds.
+  Oversized parts return a 400 response on upload routes.
+
+### Added
+- A strict `pip-audit` CI job checks both Python requirement files. No
+  advisories are ignored.
+- Regression coverage for multipart field and header limits on the Sigma
+  batch upload route. Pin Starlette to the version used by these checks.
+
 ## [0.1.0] - 2026-06-10
 
 First public release under the **Vervet** name (formerly "Bro Hunter").

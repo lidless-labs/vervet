@@ -91,7 +91,7 @@ sanitized output from the real HTTP exporter after mocked MISP and Wazuh
 operations. It includes two findings with distinct links, an IOC, ATT&CK IDs,
 a stored annotation, and structured closeout facts for Intel Workbench import.
 
-Tests use the pinned test-only `jsonschema==4.23.0` with Draft202012Validator and
+Tests use the pinned test-only `jsonschema==4.26.0` with Draft202012Validator and
 an explicitly registered RFC3339 FormatChecker. The checker needs no optional
 format package. Install `requirements-test.txt` before running
 `python -m pytest -q`. It includes the existing backend requirements and the schema validator.

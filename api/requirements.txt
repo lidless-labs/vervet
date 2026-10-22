@@ -1,8 +1,9 @@
 # Vervet API dependencies
 fastapi==0.159.1
-uvicorn[standard]==0.27.0
+starlette==1.9.0
+uvicorn[standard]==0.54.0
 python-multipart==0.0.32
 pydantic==2.14.1
 pydantic-settings==2.16.1
-python-dateutil==2.8.2
-numpy==1.26.3
+python-dateutil==3.0.0
+numpy==2.5.4

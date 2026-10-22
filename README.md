@@ -20,7 +20,7 @@
 <p align="center">
   <img src="https://shieldcn.dev/github/ci/lidless-labs/vervet.svg?branch=main&workflow=ci.yml" alt="CI">
   <img src="https://shieldcn.dev/badge/version-0.1.0-blue.svg" alt="Version 0.1.0">
-  <img src="https://shieldcn.dev/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+">
+  <img src="https://shieldcn.dev/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.12+">
   <img src="https://shieldcn.dev/badge/react-18-61DAFB.svg?logo=react&logoColor=0f172a" alt="React 18">
   <img src="https://shieldcn.dev/badge/MITRE_ATT%26CK-mapped-f97316.svg" alt="MITRE ATT&CK mapped">
   <img src="https://shieldcn.dev/badge/license-Apache--2.0-green.svg" alt="Apache-2.0">
