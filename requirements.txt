@@ -1,12 +1,12 @@
 # Vervet Backend Dependencies
 # FastAPI framework and server
-fastapi==0.109.0
+fastapi==0.159.1
 uvicorn[standard]==0.27.0
 
 # Data validation and settings
-python-multipart==0.0.6
-pydantic==2.5.3
-pydantic-settings==2.1.0
+python-multipart==0.0.32
+pydantic==2.14.1
+pydantic-settings==2.16.1
 
 # Date/time handling
 python-dateutil==2.8.2

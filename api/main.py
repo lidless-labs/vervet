@@ -6,7 +6,8 @@ import os
 import sys
 import logging
 
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
+from api.dependencies.auth import api_key_auth
 from fastapi.middleware.cors import CORSMiddleware
 from api.config import settings
 from api.routers import analysis, logs, ingest, data, hunt, dns_threat, export, sessions, scoring, intel, reports, analytics, capture, workflow, search, packets, baseline, anomalies, cases, bundles, rules, sigma, hosts, hunt_hypotheses, annotations, trends
@@ -80,7 +81,10 @@ app.add_middleware(
 )
 
 
-@app.get("/api/status")
+api_router = APIRouter(dependencies=[Depends(api_key_auth)])
+
+
+@api_router.get("/api/status")
 async def root():
     """API status endpoint."""
     return {
@@ -98,41 +102,44 @@ async def health():
 
 
 # Include routers
-app.include_router(logs.router, prefix=f"{settings.api_prefix}/logs", tags=["logs"])
-app.include_router(
+api_router.include_router(logs.router, prefix=f"{settings.api_prefix}/logs", tags=["logs"])
+api_router.include_router(
     analysis.router, prefix=f"{settings.api_prefix}/analysis", tags=["analysis"]
 )
-app.include_router(ingest.router, prefix=f"{settings.api_prefix}/ingest", tags=["ingest"])
-app.include_router(data.router, prefix=f"{settings.api_prefix}/data", tags=["data"])
-app.include_router(hunt.router, prefix=f"{settings.api_prefix}/hunt", tags=["hunt"])
-app.include_router(dns_threat.router, prefix=f"{settings.api_prefix}/hunt", tags=["dns-threats"])
-app.include_router(export.router, prefix=f"{settings.api_prefix}/export", tags=["export"])
-app.include_router(sessions.router, prefix=f"{settings.api_prefix}/sessions", tags=["sessions"])
-app.include_router(scoring.router, prefix=f"{settings.api_prefix}/scoring", tags=["scoring"])
-app.include_router(intel.router, prefix=f"{settings.api_prefix}/intel", tags=["intel"])
-app.include_router(reports.router, prefix=f"{settings.api_prefix}/reports", tags=["reports"])
-app.include_router(cases.router, prefix=f"{settings.api_prefix}/cases", tags=["cases"])
-app.include_router(bundles.router, prefix=f"{settings.api_prefix}/cases", tags=["bundles"])
-app.include_router(analytics.router, prefix=f"{settings.api_prefix}/analytics", tags=["analytics"])
-app.include_router(trends.router, prefix=f"{settings.api_prefix}/trends", tags=["trends"])
-app.include_router(capture.router, prefix=f"{settings.api_prefix}/capture", tags=["capture"])
-app.include_router(workflow.router, prefix=f"{settings.api_prefix}/workflow", tags=["workflow"])
-app.include_router(settings_router.router, prefix=f"{settings.api_prefix}/settings", tags=["settings"])
-app.include_router(search.router, prefix=f"{settings.api_prefix}/search", tags=["search"])
-app.include_router(packets.router, prefix=f"{settings.api_prefix}/packets", tags=["packets"])
-app.include_router(baseline.router, prefix=f"{settings.api_prefix}/baseline", tags=["baseline"])
-app.include_router(anomalies.router, prefix=f"{settings.api_prefix}/anomalies", tags=["anomalies"])
-app.include_router(hunt_hypotheses.router, prefix=f"{settings.api_prefix}/hypotheses", tags=["hypotheses"])
-app.include_router(annotations.router, prefix=f"{settings.api_prefix}/annotations", tags=["annotations"])
-app.include_router(rules.router, prefix=f"{settings.api_prefix}/rules", tags=["rules"])
-app.include_router(sigma.router, prefix=f"{settings.api_prefix}/sigma", tags=["sigma"])
-app.include_router(hosts.router, prefix=f"{settings.api_prefix}/hosts", tags=["hosts"])
-app.include_router(tls.router)
-app.include_router(webhooks.router)
-app.include_router(http_analysis.router)
-app.include_router(lateral.router)
-app.include_router(integrations.router)
-app.include_router(live_ops.router, prefix=f"{settings.api_prefix}/live", tags=["live-operations"])
+api_router.include_router(ingest.router, prefix=f"{settings.api_prefix}/ingest", tags=["ingest"])
+api_router.include_router(data.router, prefix=f"{settings.api_prefix}/data", tags=["data"])
+api_router.include_router(hunt.router, prefix=f"{settings.api_prefix}/hunt", tags=["hunt"])
+api_router.include_router(dns_threat.router, prefix=f"{settings.api_prefix}/hunt", tags=["dns-threats"])
+api_router.include_router(export.router, prefix=f"{settings.api_prefix}/export", tags=["export"])
+api_router.include_router(sessions.router, prefix=f"{settings.api_prefix}/sessions", tags=["sessions"])
+api_router.include_router(scoring.router, prefix=f"{settings.api_prefix}/scoring", tags=["scoring"])
+api_router.include_router(intel.router, prefix=f"{settings.api_prefix}/intel", tags=["intel"])
+api_router.include_router(reports.router, prefix=f"{settings.api_prefix}/reports", tags=["reports"])
+api_router.include_router(cases.router, prefix=f"{settings.api_prefix}/cases", tags=["cases"])
+api_router.include_router(bundles.router, prefix=f"{settings.api_prefix}/cases", tags=["bundles"])
+api_router.include_router(analytics.router, prefix=f"{settings.api_prefix}/analytics", tags=["analytics"])
+api_router.include_router(trends.router, prefix=f"{settings.api_prefix}/trends", tags=["trends"])
+api_router.include_router(capture.router, prefix=f"{settings.api_prefix}/capture", tags=["capture"])
+api_router.include_router(workflow.router, prefix=f"{settings.api_prefix}/workflow", tags=["workflow"])
+api_router.include_router(settings_router.router, prefix=f"{settings.api_prefix}/settings", tags=["settings"])
+api_router.include_router(search.router, prefix=f"{settings.api_prefix}/search", tags=["search"])
+api_router.include_router(packets.router, prefix=f"{settings.api_prefix}/packets", tags=["packets"])
+api_router.include_router(baseline.router, prefix=f"{settings.api_prefix}/baseline", tags=["baseline"])
+api_router.include_router(anomalies.router, prefix=f"{settings.api_prefix}/anomalies", tags=["anomalies"])
+api_router.include_router(hunt_hypotheses.router, prefix=f"{settings.api_prefix}/hypotheses", tags=["hypotheses"])
+api_router.include_router(annotations.router, prefix=f"{settings.api_prefix}/annotations", tags=["annotations"])
+api_router.include_router(rules.router, prefix=f"{settings.api_prefix}/rules", tags=["rules"])
+api_router.include_router(sigma.router, prefix=f"{settings.api_prefix}/sigma", tags=["sigma"])
+api_router.include_router(hosts.router, prefix=f"{settings.api_prefix}/hosts", tags=["hosts"])
+api_router.include_router(tls.router)
+api_router.include_router(webhooks.router)
+api_router.include_router(http_analysis.router)
+api_router.include_router(lateral.router)
+api_router.include_router(integrations.router)
+api_router.include_router(live_ops.router, prefix=f"{settings.api_prefix}/live", tags=["live-operations"])
+
+
+app.include_router(api_router)
 
 
 ## Demo data loading is handled via lifespan context manager above

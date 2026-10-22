@@ -15,7 +15,10 @@ from api.services.unified_threat_engine import UnifiedThreatEngine
 
 router = APIRouter()
 
-WEIGHTS_FILE = os.path.join(os.path.dirname(__file__), "..", "config", "scoring_weights.json")
+WEIGHTS_FILE = os.environ.get(
+    "VERVET_SCORING_WEIGHTS_FILE",
+    os.path.join(os.path.dirname(__file__), "..", "config", "scoring_weights.json"),
+)
 
 DEFAULT_WEIGHTS = {
     "beacon": 0.30,

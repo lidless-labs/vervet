@@ -2,9 +2,12 @@
 Webhook alert delivery manager.
 Supports Discord, Slack, and generic JSON webhooks.
 """
+import asyncio
 import ipaddress
 import json
 import os
+import re
+import socket
 import time
 import uuid
 from dataclasses import dataclass, field, asdict
@@ -14,6 +17,11 @@ import httpx
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
 CONFIGS_PATH = os.path.join(DATA_DIR, "webhook_configs.json")
+MAX_PAYLOAD_BYTES = 64 * 1024
+MAX_RESPONSE_BYTES = 64 * 1024
+ATTEMPT_TIMEOUT = 3.0
+DELIVERY_TIMEOUT = 10.0
+
 HISTORY_PATH = os.path.join(DATA_DIR, "webhook_history.json")
 
 
@@ -133,61 +141,127 @@ class WebhookManager:
         }
 
     @staticmethod
-    def _is_safe_url(url: str) -> bool:
-        parsed = urlparse(url)
-        if parsed.scheme not in {"https", "http"} or not parsed.hostname:
-            return False
+    def _parse_url(url: str) -> httpx.URL:
+        """Normalize one HTTP authority before resolving its destination."""
         try:
-            ip = ipaddress.ip_address(parsed.hostname)
-            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
-                return False
+            if len(url) > 4096 or any(ord(c) <= 32 or ord(c) == 127 for c in url):
+                raise ValueError
+            parsed = urlparse(url)
+            if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+                    or parsed.username is not None or parsed.password is not None
+                    or parsed.netloc.endswith(":")):
+                raise ValueError
+            port = parsed.port
+            if port is not None and not 1 <= port <= 65535:
+                raise ValueError
+            normalized = httpx.URL(url)
+            host = normalized.raw_host.decode("ascii")
+            try:
+                ipaddress.ip_address(host)
+            except ValueError:
+                labels = host.rstrip(".").split(".")
+                if len(host) > 253 or any(
+                    not re.fullmatch(r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?", label)
+                    for label in labels
+                ):
+                    raise ValueError
+            return normalized
+        except (ValueError, httpx.InvalidURL):
+            raise ValueError("Invalid webhook URL") from None
+
+    @staticmethod
+    async def _resolve_destination(url: httpx.URL) -> str:
+        """Require every answer to satisfy the global-address policy."""
+        host = url.raw_host.decode("ascii")
+        try:
+            address = ipaddress.ip_address(host)
+            addresses = [address]
         except ValueError:
-            pass  # non-IP hostname, allow
-        return True
+            try:
+                results = await asyncio.get_running_loop().getaddrinfo(
+                    host, url.port or (443 if url.scheme == "https" else 80),
+                    type=socket.SOCK_STREAM,
+                )
+                addresses = [ipaddress.ip_address(result[4][0]) for result in results]
+            except (OSError, ValueError):
+                raise ValueError("Webhook resolution failed") from None
+        if not addresses or any(
+            not address.is_global or address.is_multicast for address in addresses
+        ):
+            raise ValueError("Invalid webhook destination")
+        return str(addresses[0])
+
+    @staticmethod
+    def _encode_payload(payload: dict) -> bytes:
+        """Stop serialization as soon as the delivery size limit is exceeded."""
+        body = bytearray()
+        for chunk in json.JSONEncoder(ensure_ascii=True, allow_nan=False).iterencode(payload):
+            if len(chunk) > MAX_PAYLOAD_BYTES - len(body):
+                raise ValueError("Webhook payload too large")
+            body.extend(chunk.encode("ascii"))
+        return bytes(body)
 
     async def send_webhook(self, config: WebhookConfig, payload: dict) -> DeliveryRecord:
         record = DeliveryRecord(
-            id=str(uuid.uuid4())[:8],
-            config_name=config.name,
-            config_id=config.id,
-            timestamp=time.time(),
-            status="pending",
-            payload_preview=json.dumps(payload)[:200],
+            id=str(uuid.uuid4())[:8], config_name=config.name, config_id=config.id,
+            timestamp=time.time(), status="failed",
         )
-
-        if not self._is_safe_url(config.url):
-            record.status = "failed"
-            record.error = "Unsafe webhook URL (private/loopback/reserved)"
-            self.history.append(record)
-            self._save_history()
-            return record
-
-        if config.webhook_type == "discord":
-            body = self._format_discord(payload)
-        elif config.webhook_type == "slack":
-            body = self._format_slack(payload)
-        else:
-            body = payload
-
-        retries = 2
-        for attempt in range(retries + 1):
-            try:
-                async with httpx.AsyncClient(timeout=3.0) as client:
-                    resp = await client.post(config.url, json=body)
-                record.response_code = resp.status_code
-                if 200 <= resp.status_code < 300:
-                    record.status = "success"
-                    break
+        try:
+            async with asyncio.timeout(DELIVERY_TIMEOUT):
+                raw_payload = self._encode_payload(payload)
+                record.payload_preview = raw_payload[:200].decode("ascii")
+                if config.webhook_type == "discord":
+                    body = self._encode_payload(self._format_discord(payload))
+                elif config.webhook_type == "slack":
+                    body = self._encode_payload(self._format_slack(payload))
                 else:
-                    record.status = "failed"
-                    record.error = f"HTTP {resp.status_code}"
-            except Exception as exc:
-                record.status = "failed"
-                record.error = str(exc)
-                if attempt < retries:
-                    continue
+                    body = raw_payload
+                url = self._parse_url(config.url)
+                address = await self._resolve_destination(url)
+                # The transport connects to this address for every attempt.
+                # Host and TLS verification continue to use the URL authority.
+                async with httpx.AsyncClient(
+                    transport=_PinnedTransport(address), timeout=ATTEMPT_TIMEOUT,
+                    follow_redirects=False, trust_env=False,
+                ) as client:
+                    for attempt in range(3):
+                        record.response_code = None
+                        try:
+                            async with asyncio.timeout(ATTEMPT_TIMEOUT):
+                                async with client.stream(
+                                    "POST", url, content=body,
+                                    headers={"Content-Type": "application/json", "Accept-Encoding": "identity"},
+                                ) as response:
+                                    record.response_code = response.status_code
+                                    if 300 <= response.status_code < 400:
+                                        record.error = "Webhook redirect rejected"
+                                        break
+                                    size = 0
+                                    async for chunk in response.aiter_raw():
+                                        size += len(chunk)
+                                        if size > MAX_RESPONSE_BYTES:
+                                            raise ValueError("Webhook response too large")
+                                    if 200 <= response.status_code < 300:
+                                        record.status = "success"
+                                        record.error = None
+                                        break
+                                    record.error = "Webhook HTTP error"
+                        except (httpx.HTTPError, OSError):
+                            record.error = "Webhook delivery failed"
+                        except TimeoutError:
+                            record.error = "Webhook delivery timed out"
+        except TimeoutError:
+            record.error = "Webhook delivery timed out"
+        except ValueError as exc:
+            record.error = str(exc) if str(exc) in {
+                "Invalid webhook URL", "Invalid webhook destination", "Webhook resolution failed",
+                "Webhook payload too large", "Webhook response too large",
+            } else "Invalid webhook payload"
+        except (TypeError, OverflowError, RecursionError):
+            record.error = "Invalid webhook payload"
 
         self.history.append(record)
+        self.history = self.history[-100:]
         self._save_history()
         return record
 
@@ -202,6 +276,22 @@ class WebhookManager:
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
         return await self.send_webhook(config, payload)
+
+
+class _PinnedTransport(httpx.AsyncHTTPTransport):
+    """Connect to a checked IP while retaining the original HTTP/TLS authority."""
+
+    def __init__(self, address: str):
+        super().__init__(trust_env=False, retries=0)
+        self.address = address
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        pinned = httpx.Request(
+            request.method, request.url.copy_with(host=self.address),
+            headers=request.headers, content=request.stream,
+            extensions={**request.extensions, "sni_hostname": request.url.raw_host.decode("ascii")},
+        )
+        return await super().handle_async_request(pinned)
 
 
 webhook_manager = WebhookManager()
